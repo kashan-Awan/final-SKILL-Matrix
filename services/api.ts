@@ -1,4 +1,5 @@
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+const BASE_URL_FROM_ENV = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api';
+const BASE_URL = BASE_URL_FROM_ENV.endsWith('/api') ? BASE_URL_FROM_ENV : `${BASE_URL_FROM_ENV}/api`;
 
 export interface ApiResponse<T> {
   success: boolean;

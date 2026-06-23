@@ -107,8 +107,16 @@ export default function AdminDashboard() {
         headers: { Authorization: `Bearer ${token}` }
       });
       const data = await res.json();
-      if (data.success) setUsers(data.data ?? []);
-      else showToast(data.message || 'Failed to load users', 'err');
+      
+      // The API might be returning an array directly, or an object with a `data` property.
+      const usersData = data.success ? data.data : data;
+
+      if (Array.isArray(usersData)) {
+        setUsers(usersData);
+      } else {
+        showToast('Failed to load users: invalid format.', 'err');
+        setUsers([]); // fallback to empty array
+      }
     } catch {
       showToast('Network error while loading users.', 'err');
     } finally {

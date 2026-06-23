@@ -35,6 +35,8 @@ import type { Department, Employee } from "../types";
 import EmployeeInspectionModal from "../components/EmployeeInspectionModal";
 import { employeesService } from "@/services/employees.service";
 import { departmentsService } from "@/services/departments.service";
+import { employeeSkillsService } from "@/services/employee-skills.service";
+import { skillsService } from "@/services/skills.service";
 
 import useUserPermissions from "../../hooks/useUserPermissions";
 
@@ -85,33 +87,35 @@ export default function EmployeesPage() {
       setIsLoading(true);
       try {
         const [empResult, deptResult] = await Promise.all([
-          employeesService.getAll(),
-          departmentsService.getAll(),
+            employeesService.getAll(),
+            departmentsService.getAll(),
         ]);
 
         const empData = empResult;
         const deptData = deptResult;
 
-        if (deptData.success) {
-          setDepartments((deptData.data ?? []) as any);
-
+        if (deptData.success && empResult.success) {
+          const departmentsList = (deptData.data ?? []) as any;
+          setDepartments(departmentsList);
+          
           // Now map employees with department names using the fetched departments
-          const employees = (empData.data ?? []).map((emp: any) => ({
-            ...emp,
-            // The API now returns skills directly as an object {skillName: level}
-            skills: emp.skills || {},
-            totalSkills: Object.keys(emp.skills || {}).length,
-            department: getDepartmentNameFromList(
-              emp.departmentId,
-              deptData.data ?? []
-            ),
-          }));
+          const employees = (empData.data ?? []).map((emp: any) => {
+            return {
+                ...emp,
+                skills: emp.skills || {},
+                totalSkills: Object.keys(emp.skills || {}).length,
+                department: getDepartmentNameFromList(
+                  emp.departmentId,
+                  departmentsList
+                ),
+            };
+          });
           setEmployees(employees);
 
           // Calculate department metrics after both employees and departments are set
           const metrics = calculateDepartmentMetricsFromData(
             employees,
-            deptData.data ?? []
+            departmentsList
           );
           setDepartmentMetrics(metrics);
         }

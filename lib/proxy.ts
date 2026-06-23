@@ -9,7 +9,7 @@ import { NextRequest } from 'next/server';
  */
 
 // Use the same environment variable defined in your backendClient.ts
-const BACKEND_API_URL = process.env.BACKEND_API_URL || 'http://localhost:5000/api';
+const BACKEND_API_URL = process.env.BACKEND_API_URL || 'http://localhost:5001/api';
 
 export async function handleBackendProxy(req: NextRequest, path: string): Promise<Response> {
   // 1. Construct the target URL, appending query parameters from the original request

@@ -10,7 +10,7 @@ import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { Eye, EyeOff, Mail, Lock, Rocket, Star, Cloud, Sparkles, UserPlus } from "lucide-react"
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001'
 
 export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false)

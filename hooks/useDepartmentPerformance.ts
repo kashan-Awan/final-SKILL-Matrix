@@ -36,7 +36,8 @@ export function useDepartmentPerformance(year?: number): UseDepartmentPerformanc
         ...(calculate && { calculate: 'true' })
       });
 
-      const BACKEND = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+      const BASE_URL_FROM_ENV = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api';
+      const BACKEND = BASE_URL_FROM_ENV.endsWith('/api') ? BASE_URL_FROM_ENV : `${BASE_URL_FROM_ENV}/api`;
       
       // ✅ ADDED: Get the token
       const token = getToken();

@@ -28,7 +28,7 @@ export default function RegisterPage() {
     setSuccessMessage("")
 
     try {
-      const response = await fetch('http://localhost:5000/api/registration/request', {
+      const response = await fetch('http://localhost:5001/api/registration/request', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name, email, password, role: userRole, employeeId: employeeId || undefined })

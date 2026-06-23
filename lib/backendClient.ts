@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 
-const BACKEND = process.env.BACKEND_API_URL || 'http://localhost:5000/api';
+const BACKEND = process.env.BACKEND_API_URL || 'http://localhost:5001/api';
 
 /** Map frontend role 'user' → backend DB role 'employee', preserves casing otherwise */
 export const mapRoleToDb = (role: string): string => {

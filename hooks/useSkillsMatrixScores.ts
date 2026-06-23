@@ -47,7 +47,7 @@ export function useSkillsMatrixScores(departmentId?: string) {
     setError(null);
     
     try {
-      const BACKEND = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+      const BACKEND = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api';
       const url = departmentId 
         ? `${BACKEND}/dashboard/machine-scores?departmentId=${departmentId}`
         : `${BACKEND}/dashboard/machine-scores`;

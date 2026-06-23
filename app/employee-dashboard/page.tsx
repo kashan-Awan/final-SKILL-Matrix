@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { api } from "@/services/api";
 
 interface EmployeeData {
   id: string;
@@ -37,6 +38,25 @@ interface EmployeeData {
   isActive: boolean;
   skills: Record<string, string>;
   totalSkills: number;
+}
+
+interface ProfileUserData {
+  _id?: string;
+  id?: string;
+  name: string;
+  email: string;
+  employeeId?: string;
+  displayId?: string;
+  department?: string;
+  departmentId?: string;
+  phone?: string;
+  gender?: string;
+  title?: string;
+  yearsExperience?: number;
+  hireDate?: string;
+  role?: string;
+  isActive?: boolean;
+  skills?: Record<string, string>;
 }
 
 interface Skill {
@@ -85,18 +105,12 @@ export default function EmployeeDashboard() {
     yearsExperience: ""
   });
 
-  const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
 
-  const getToken = () => {
-    return localStorage.getItem('token') || localStorage.getItem('adminToken');
-  };
+
+
 
   useEffect(() => {
-    const token = getToken();
-    if (!token) {
-      window.location.href = '/login';
-      return;
-    }
+
     fetchEmployeeData();
   }, []);
 
@@ -114,37 +128,32 @@ export default function EmployeeDashboard() {
     try {
       setLoading(true);
       setError(null);
-      const token = getToken();
 
-      const profileResponse = await fetch(`${API_BASE}/employee/profile`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      const profileData = await profileResponse.json();
 
-      // #region agent log
-      fetch('http://127.0.0.1:7378/ingest/353ef36c-6a32-456e-a37d-4222e72b6aca',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'89e245'},body:JSON.stringify({sessionId:'89e245',runId:'employee-debug',hypothesisId:'F',location:'employee-dashboard:profileResponse',message:'Profile API response',data:{httpStatus:profileResponse.status,success:profileData.success,hasData:!!profileData.data,message:profileData.message||null,apiBase:API_BASE},timestamp:Date.now()})}).catch(()=>{});
-      // #endregion
+      const profileData = await api.get('/users/profile');
+
+
 
       if (profileData.success && profileData.data) {
-        const userData = profileData.data;
+        const userData = profileData.data as ProfileUserData;
         
         console.log('isActive from API:', userData.isActive);
 
         const employeeData: EmployeeData = {
-          id: userData._id || userData.id,
+          id: userData._id || userData.id || '',
           name: userData.name,
           email: userData.email,
-          employeeId: userData.employeeId || userData._id?.slice(-8) || '',
-          displayId: userData.displayId || userData.employeeId || userData._id?.slice(-8) || '',
+          employeeId: userData.employeeId || userData._id?.slice(-8) || userData.id?.slice(-8) || '',
+          displayId: userData.displayId || userData.employeeId || userData._id?.slice(-8) || userData.id?.slice(-8) || '',
           department: userData.department || "N/A",
-          departmentId: userData.departmentId,
+          departmentId: userData.departmentId || '',
           phone: userData.phone || "",
           gender: userData.gender || "",
           title: userData.title || "",
-          yearsExperience: userData.yearsExperience || 0,
-          hireDate: userData.hireDate,
-          role: userData.role,
-          isActive: true, // temporary workaround
+          yearsExperience: userData.yearsExperience ?? 0,
+          hireDate: userData.hireDate || '',
+          role: userData.role || '',
+          isActive: userData.isActive ?? true,
           skills: userData.skills || {},
           totalSkills: Object.keys(userData.skills || {}).length
         };
@@ -166,28 +175,22 @@ export default function EmployeeDashboard() {
         }));
         setSkills(skillsList);
       } else {
-        setError(profileData.message || `Failed to load profile (HTTP ${profileResponse.status})`);
+        setError(profileData.message || 'Failed to load profile');
       }
 
       try {
-        const machinesResponse = await fetch(`${API_BASE}/employee/machines`, {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
-        const machinesData = await machinesResponse.json();
+        const machinesData = await api.get('/employees/machines');
         if (machinesData.success) {
-          setMachines(machinesData.data || []);
+          setMachines((machinesData.data as Machine[]) || []);
         }
       } catch (err) {
         console.log('Machines API not available yet');
       }
 
       try {
-        const shiftResponse = await fetch(`${API_BASE}/employee/shift`, {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
-        const shiftData = await shiftResponse.json();
+        const shiftData = await api.get('/employees/shift');
         if (shiftData.success && shiftData.data) {
-          setShift(shiftData.data);
+          setShift(shiftData.data as Shift);
         } else {
           setShift({
             type: "Day Shift",
@@ -222,22 +225,13 @@ export default function EmployeeDashboard() {
   const handleSaveProfile = async () => {
     setSaving(true);
     try {
-      const token = getToken();
-      const response = await fetch(`${API_BASE}/employee/profile`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          phone: editForm.phone,
-          gender: editForm.gender,
-          title: editForm.title,
-          yearsExperience: parseInt(editForm.yearsExperience) || 0
-        })
-      });
 
-      const data = await response.json();
+      const data = await api.put('/users/profile', {
+        phone: editForm.phone,
+        gender: editForm.gender,
+        title: editForm.title,
+        yearsExperience: parseInt(editForm.yearsExperience) || 0
+      });
       if (data.success) {
         setIsEditing(false);
         await fetchEmployeeData();
@@ -442,8 +436,10 @@ export default function EmployeeDashboard() {
                       />
                     </div>
                     <div>
-                      <Label>Gender</Label>
+                      <Label htmlFor="gender">Gender</Label>
                       <select 
+                        id="gender"
+                        aria-label="Gender"
                         value={editForm.gender} 
                         onChange={(e) => setEditForm({...editForm, gender: e.target.value})}
                         className="w-full mt-1 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#1E3A8A]"

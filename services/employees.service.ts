@@ -27,13 +27,13 @@ export interface CreateEmployeePayload {
 export type UpdateEmployeePayload = Partial<Omit<EmployeeData, 'id' | '_id'>>;
 
 export const employeesService = {
-  /** GET /api/employees/full - returns all employees with skills map + skillLevel */
+  /** GET /api/employees - returns all employees with skills map + skillLevel */
   getAll: (): Promise<ApiResponse<EmployeeData[]>> =>
-    api.get<EmployeeData[]>('/employees/full'),
+    api.get<EmployeeData[]>('/employees'),
 
-  /** GET /api/employees/full?id=:id */
+  /** GET /api/employees?id=:id */
   getById: (id: string): Promise<ApiResponse<EmployeeData[]>> =>
-    api.get<EmployeeData[]>(`/employees/full?id=${encodeURIComponent(id)}`),
+    api.get<EmployeeData[]>(`/employees?id=${encodeURIComponent(id)}`),
 
   /** POST /api/employees */
   create: (payload: CreateEmployeePayload): Promise<ApiResponse<EmployeeData>> =>

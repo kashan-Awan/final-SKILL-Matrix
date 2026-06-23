@@ -28,10 +28,20 @@ export default function DatabaseError({ error, onRetry }: DatabaseErrorProps) {
           <div className="space-y-4">
             <h4 className="font-semibold text-red-800">Troubleshooting Steps:</h4>
             <ol className="list-decimal list-inside space-y-2 text-sm text-red-700">
-              <li>Make sure your SQL database server is running</li>
-              <li>Check if your SQL database is accessible at the configured host/port</li>
-              <li>Verify the database connection string in your <code className="bg-red-100 px-1 rounded">.env.local</code> file</li>
-              <li>Try seeding the database first by visiting <code className="bg-red-100 px-1 rounded">/database-test</code></li>
+              <li>Open **Services.msc** and ensure **SQL Server (SQLEXPRESS)** and **SQL Server Browser** are "Running".</li>
+              <li>In **SQL Server Configuration Manager**, enable **TCP/IP** and ensure **Port 1433** is set in IPAll (if not using a named instance).</li>
+              <li>If using a Named Instance (e.g. SQLEXPRESS), ensure <code className="bg-red-100 px-1 rounded">DB_INSTANCE</code> is set in <code className="bg-red-100 px-1 rounded">.env.local</code> and <code className="bg-red-100 px-1 rounded">DB_PORT</code> is **removed**.</li>
+              <li>Ensure your SQL Server allows **Mixed Mode Authentication** (SQL Server and Windows Auth).</li>
+              <li>
+                Current Connection Settings:
+                <ul className="list-disc list-inside ml-6 text-xs mt-1">
+                  <li>Host: {process.env.NEXT_PUBLIC_DB_HOST || 'localhost'}</li>
+                  <li>Port: {process.env.NEXT_PUBLIC_DB_INSTANCE ? 'SQL Browser (dynamic)' : (process.env.NEXT_PUBLIC_DB_PORT || '1433')}</li>
+                  <li>Instance: {process.env.NEXT_PUBLIC_DB_INSTANCE || 'None'} (Ensure this matches your SQL Server instance name if applicable)</li>
+                  <li>Database: {process.env.NEXT_PUBLIC_DB_NAME || 'Dawlance_Skills_Matrix'}</li>
+                </ul>
+              </li>
+              <li>Try seeding the database first by visiting <a href="/database-test" className="underline font-medium">/database-test</a></li>
             </ol>
           </div>
 

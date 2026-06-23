@@ -40,7 +40,7 @@ The Skills Matrix system will:
 
 ## 2. Overall Description
 ### 2.1 Product Perspective
-The Skills Matrix is a modular, scalable web application built with Next.js, TypeScript, and MySQL. It is designed to integrate with existing HR and machine data systems, providing a unified platform for skills and performance management.
+The Skills Matrix is a modular, scalable web application built with Next.js, TypeScript, and Microsoft SQL Server. It is designed to integrate with existing HR and machine data systems, providing a unified platform for skills and performance management.
 
 ### 2.2 Product Functions
 - Secure user authentication and RBAC
@@ -59,11 +59,11 @@ The Skills Matrix is a modular, scalable web application built with Next.js, Typ
 ### 2.4 Operating Environment
 - Modern web browsers (Chrome, Edge, Firefox)
 - Node.js server environment
-- MySQL database
+    - Microsoft SQL Server 2016+
 
 ### 2.5 Design and Implementation Constraints
 - Must use Next.js and TypeScript
-- MySQL as the primary database
+- Microsoft SQL Server as the primary database
 - Responsive and accessible design (WCAG 2.1 compliance)
 - Secure coding practices (OWASP Top 10)
 
@@ -137,7 +137,7 @@ The Skills Matrix is a modular, scalable web application built with Next.js, Typ
 ### 3.3 External Interface Requirements
 - **UI:** Responsive, cross-browser web interface
 - **API:** RESTful endpoints with OpenAPI documentation
-- **Database:** MySQL schema for employees, departments, skills, machines, audit logs
+- **Database:** MSSQL schema for users, departments, skills, machines, audit logs
 - **Integration:** Support for HRIS and machine data import
 
 
@@ -145,7 +145,7 @@ The Skills Matrix is a modular, scalable web application built with Next.js, Typ
 ### 4.1 High-Level Architecture
 - **Frontend:** Next.js (React, TypeScript, Tailwind CSS)
 - **Backend:** Node.js API (REST), authentication provider integration
-- **Database:** MySQL (cloud or on-premises)
+- **Database:** Microsoft SQL Server (cloud or on-premises)
 - **CI/CD:** Automated testing and deployment pipeline
 
 ### 4.2 Component Diagram (Mermaid)
@@ -153,7 +153,7 @@ The Skills Matrix is a modular, scalable web application built with Next.js, Typ
 graph TD
 	A[User] -->|Web UI| B(Next.js Frontend)
 	B -->|REST API| C(Node.js Backend)
-	C -->|DB Access| D[MySQL]
+	C -->|DB Access| D[MS SQL Server]
 	C -->|Auth| E[Auth Provider]
 	C -->|HRIS/Machine Data| F[External Systems]
 ```
@@ -161,7 +161,7 @@ graph TD
 ### 4.3 Data Flow
 1. User interacts with the web UI
 2. Frontend communicates with backend via REST API
-3. Backend processes requests, applies business logic, and interacts with MySQL
+3. Backend processes requests, applies business logic, and interacts with MSSQL
 4. Authentication and authorization handled via provider
 5. Data imported/exported as needed
 

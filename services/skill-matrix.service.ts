@@ -4,13 +4,17 @@ export interface SkillMatrix {
   _id: string;
   employeeId: string;
   departmentId: string;
-  skillId: string;
-  level: string;
-  isActive: boolean;
+  name: string;
+  description?: string;
+  matrixData?: any;
+  version?: string;
+  isActive?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
   [key: string]: unknown;
 }
 
-export type CreateSkillMatrixPayload = Omit<SkillMatrix, '_id' | 'isActive'>;
+export type CreateSkillMatrixPayload = Omit<SkillMatrix, '_id' | 'isActive' | 'createdAt' | 'updatedAt'>;
 export type UpdateSkillMatrixPayload = Partial<Omit<SkillMatrix, '_id'>>;
 
 export const skillMatrixService = {
@@ -18,7 +22,7 @@ export const skillMatrixService = {
   getAll: (): Promise<ApiResponse<SkillMatrix[]>> =>
     api.get<SkillMatrix[]>('/skill-matrices'),
 
-  /** GET /api/skill-matrices?departmentId=:id */
+  /** GET /api/skill-matrices?employeeId=:id */
   getByEmployee: (employeeId: string): Promise<ApiResponse<SkillMatrix[]>> =>
     api.get<SkillMatrix[]>(`/skill-matrices?employeeId=${employeeId}`),
 
@@ -34,11 +38,11 @@ export const skillMatrixService = {
   create: (payload: CreateSkillMatrixPayload): Promise<ApiResponse<SkillMatrix>> =>
     api.post<SkillMatrix>('/skill-matrices', payload),
 
-  /** PUT /api/skill-matrices */
+  /** PUT /api/skill-matrices/:id */
   update: (id: string, payload: UpdateSkillMatrixPayload): Promise<ApiResponse<SkillMatrix>> =>
-    api.put<SkillMatrix>('/skill-matrices', { id, ...payload }),
+    api.put<SkillMatrix>(`/skill-matrices/${id}`, payload),
 
-  /** DELETE /api/skill-matrices?id=:id */
+  /** DELETE /api/skill-matrices/:id */
   delete: (id: string): Promise<ApiResponse<void>> =>
-    api.delete<void>(`/skill-matrices?id=${id}`),
+    api.delete<void>(`/skill-matrices/${id}`),
 };

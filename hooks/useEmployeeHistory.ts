@@ -69,6 +69,11 @@ interface UseEmployeeHistoryOptions {
   autoFetch?: boolean;
 }
 
+// ✅ ADDED: Helper function to get token
+const getToken = () => {
+  return localStorage.getItem('token') || localStorage.getItem('adminToken');
+};
+
 export const useEmployeeHistory = (options: UseEmployeeHistoryOptions = {}) => {
   const [data, setData] = useState<EmployeeHistoryResponse['data'] | null>(null);
   const [loading, setLoading] = useState(false);
@@ -96,7 +101,17 @@ export const useEmployeeHistory = (options: UseEmployeeHistoryOptions = {}) => {
       }
 
       const BACKEND = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
-      const response = await fetch(`${BACKEND}/work-history?${params.toString()}`);
+      
+      // ✅ ADDED: Get the token
+      const token = getToken();
+      
+      // ✅ CHANGED: Added headers with Authorization
+      const response = await fetch(`${BACKEND}/work-history?${params.toString()}`, {
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+        }
+      });
       
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);

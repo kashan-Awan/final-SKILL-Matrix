@@ -1,5 +1,3 @@
-// Shared types used across components
-
 export interface Department {
   id?: string;
   name: string;
@@ -74,4 +72,26 @@ export interface EmployeeHistory {
     levelProgression: Array<{ level: string; date: string }>;
     [key: string]: unknown;
   }>;
+}
+
+// ✅ SkillMatrix types
+export interface MatrixData {
+  employees: Employee[];
+  skills: string[];
+}
+
+export interface SkillMatrix {
+  _id: string;
+  name: string;
+  departmentId?: string;
+  department?: string;
+  description?: string;
+  employeeCount?: number;
+  skillCount?: number;
+  matrixData?: MatrixData;
+  isActive?: number;
+  version?: string;
+  createdBy?: string;
+  createdAt?: string;
+  updatedAt?: string;
 }

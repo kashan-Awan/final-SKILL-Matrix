@@ -1,5 +1,4 @@
 "use client"
-
 import type React from "react"
 import { useState } from "react"
 import { motion } from "framer-motion"
@@ -8,82 +7,47 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
-import { Eye, EyeOff, Mail, Lock, Rocket, Star, Cloud, Sparkles, UserPlus } from "lucide-react"
+import { User, Mail, Lock, Rocket, Star, Cloud, Sparkles, UserPlus, Briefcase } from "lucide-react"
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'
-
-export default function LoginPage() {
+export default function RegisterPage() {
   const [showPassword, setShowPassword] = useState(false)
+  const [name, setName] = useState("")
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [userRole, setUserRole] = useState("employee")
+  const [employeeId, setEmployeeId] = useState("") // Optional employee ID
   const [isLoading, setIsLoading] = useState(false)
   const [errorMessage, setErrorMessage] = useState("")
+  const [successMessage, setSuccessMessage] = useState("")
   const router = useRouter()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
     setErrorMessage("")
+    setSuccessMessage("")
 
     try {
-      const response = await fetch(`${API_URL}/api/auth/login`, {
+      const response = await fetch('http://localhost:5000/api/registration/request', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password, role: userRole })
+        body: JSON.stringify({ name, email, password, role: userRole, employeeId: employeeId || undefined })
       })
 
       const result = await response.json()
 
-      if (!result.success) {
-        setErrorMessage(result.message || 'Invalid email or password')
-        return
-      }
-
-      const token = result.token || result.data?.token
-      const user = result.user || result.data?.user || result.data
-
-      if (result.success && user && typeof user === 'object') {
-        const normalizedRole = (user.role || "").toLowerCase()
-
-        const sessionData = {
-          id: user.id || user._id,
-          name: user.name || '',
-          email: user.email || '',
-          employeeId: user.employeeId || '',
-          role: normalizedRole,
-          department: user.department || '',
-          loginTime: new Date().toISOString(),
-          token: token
-        }
-        localStorage.setItem('userSession', JSON.stringify(sessionData))
-
-        if (token) {
-          localStorage.setItem('token', token)
-          localStorage.setItem('adminToken', token)
-          localStorage.setItem('adminUser', JSON.stringify({
-            id: user.id,
-            name: user.name,
-            email: user.email,
-            role: normalizedRole
-          }))
-        }
-
-        if (normalizedRole === 'admin') {
-          router.push('/admin')
-        } else if (normalizedRole === 'manager') {
-          router.push('/manager-dashboard')
-        } else {
-          router.push('/employee-dashboard')
-        }
-
+      if (response.status === 201 && result.success) {
+        setSuccessMessage(result.message || 'Registration request submitted successfully! Please wait for admin approval.')
+        // Optionally redirect to login after a delay
+        setTimeout(() => {
+          router.push("/login")
+        }, 3000)
       } else {
-        setErrorMessage(result.message || 'Login failed')
+        setErrorMessage(result.message || 'Registration failed. Please try again.')
       }
-
     } catch (error) {
-      console.error('Login error:', error)
-      setErrorMessage('Network error. Please make sure the backend server is running.')
+      console.error("Registration error:", error)
+      setErrorMessage('Network error. Please make sure the backend server is running on port 5000.')
     } finally {
       setIsLoading(false)
     }
@@ -177,7 +141,7 @@ export default function LoginPage() {
                 transition={{ duration: 0.6, delay: 0.6 }}
                 className="text-2xl font-bold mb-4"
               >
-                Welcome to Skills Matrix
+                Join Skills Matrix
               </motion.h2>
               <motion.p
                 initial={{ y: 20, opacity: 0 }}
@@ -185,11 +149,11 @@ export default function LoginPage() {
                 transition={{ duration: 0.6, delay: 0.8 }}
                 className="text-white/80 text-lg"
               >
-                Track and improve your skills
+                Create your account and start tracking your skills today!
               </motion.p>
             </motion.div>
 
-            {/* Right Side - Login Form */}
+            {/* Right Side - Registration Form */}
             <motion.div
               initial={{ x: 50, opacity: 0 }}
               animate={{ x: 0, opacity: 1 }}
@@ -203,10 +167,11 @@ export default function LoginPage() {
                   transition={{ duration: 0.6, delay: 0.6 }}
                   className="text-3xl font-bold text-white mb-8 text-center"
                 >
-                  Sign In
+                  Register
                 </motion.h1>
 
                 <form onSubmit={handleSubmit} className="space-y-6">
+
                   {errorMessage && (
                     <motion.div
                       initial={{ opacity: 0, y: -10 }}
@@ -217,12 +182,35 @@ export default function LoginPage() {
                     </motion.div>
                   )}
 
-                  <motion.div
-                    initial={{ y: 20, opacity: 0 }}
-                    animate={{ y: 0, opacity: 1 }}
-                    transition={{ duration: 0.6, delay: 0.8 }}
-                    className="space-y-2"
-                  >
+                  {successMessage && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="bg-green-500/20 border border-green-500/50 rounded-lg p-3 text-center"
+                    >
+                      <p className="text-green-200 text-sm">{successMessage}</p>
+                    </motion.div>
+                  )}
+
+                  <motion.div className="space-y-2">
+                    <Label htmlFor="name" className="text-white/90 text-sm font-medium">
+                      Full Name
+                    </Label>
+                    <div className="relative">
+                      <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white/60 w-5 h-5" />
+                      <Input
+                        id="name"
+                        type="text"
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                        placeholder="Enter your full name"
+                        className="pl-12 bg-white/10 border border-white/30 text-white placeholder:text-white/60 focus:border-white/50 focus:ring-white/20 h-12 rounded-xl"
+                        required
+                      />
+                    </div>
+                  </motion.div>
+
+                  <motion.div className="space-y-2">
                     <Label htmlFor="email" className="text-white/90 text-sm font-medium">
                       Email
                     </Label>
@@ -240,12 +228,7 @@ export default function LoginPage() {
                     </div>
                   </motion.div>
 
-                  <motion.div
-                    initial={{ y: 20, opacity: 0 }}
-                    animate={{ y: 0, opacity: 1 }}
-                    transition={{ duration: 0.6, delay: 1 }}
-                    className="space-y-2"
-                  >
+                  <motion.div className="space-y-2">
                     <Label htmlFor="password" className="text-white/90 text-sm font-medium">
                       Password
                     </Label>
@@ -256,7 +239,7 @@ export default function LoginPage() {
                         type={showPassword ? "text" : "password"}
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
-                        placeholder="Enter your password"
+                        placeholder="Create a password"
                         className="pl-12 pr-12 bg-white/10 border border-white/30 text-white placeholder:text-white/60 focus:border-white/50 focus:ring-white/20 h-12 rounded-xl"
                         required
                       />
@@ -270,20 +253,32 @@ export default function LoginPage() {
                     </div>
                   </motion.div>
 
-                  <motion.div
-                    initial={{ y: 20, opacity: 0 }}
-                    animate={{ y: 0, opacity: 1 }}
-                    transition={{ duration: 0.6, delay: 1.2 }}
-                    className="space-y-3"
-                  >
+                  <motion.div className="space-y-2">
+                    <Label htmlFor="employeeId" className="text-white/90 text-sm font-medium">
+                      Employee ID (Optional)
+                    </Label>
+                    <div className="relative">
+                      <Briefcase className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white/60 w-5 h-5" />
+                      <Input
+                        id="employeeId"
+                        type="text"
+                        value={employeeId}
+                        onChange={(e) => setEmployeeId(e.target.value)}
+                        placeholder="Enter your employee ID (if applicable)"
+                        className="pl-12 bg-white/10 border border-white/30 text-white placeholder:text-white/60 focus:border-white/50 focus:ring-white/20 h-12 rounded-xl"
+                      />
+                    </div>
+                  </motion.div>
+
+                  <motion.div className="space-y-3">
                     <Label className="text-white/90 text-sm font-medium">
-                      Login as
+                      Register as
                     </Label>
                     <div className="grid grid-cols-3 gap-2">
                       {[
                         { value: 'employee', label: 'Employee', icon: '👤' },
-                        { value: 'manager',  label: 'Manager',  icon: '👔' },
-                        { value: 'admin',    label: 'Admin',    icon: '⚡' }
+                        { value: 'manager', label: 'Manager', icon: '👔' },
+                        { value: 'admin', label: 'Admin', icon: '⚡' }
                       ].map((role) => (
                         <label key={role.value} className="cursor-pointer">
                           <input
@@ -307,25 +302,7 @@ export default function LoginPage() {
                     </div>
                   </motion.div>
 
-                  <motion.div
-                    initial={{ y: 20, opacity: 0 }}
-                    animate={{ y: 0, opacity: 1 }}
-                    transition={{ duration: 0.6, delay: 1.3 }}
-                    className="flex justify-end items-center"
-                  >
-                    <Link
-                      href="/forgot-password"
-                      className="text-white/70 hover:text-white text-sm transition-colors hover:underline"
-                    >
-                      Forgot Password?
-                    </Link>
-                  </motion.div>
-
-                  <motion.div
-                    initial={{ y: 20, opacity: 0 }}
-                    animate={{ y: 0, opacity: 1 }}
-                    transition={{ duration: 0.6, delay: 1.4 }}
-                  >
+                  <motion.div>
                     <Button
                       type="submit"
                       disabled={isLoading}
@@ -338,53 +315,20 @@ export default function LoginPage() {
                           className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full"
                         />
                       ) : (
-                        "Sign In →"
+                        "Register Account →"
                       )}
                     </Button>
                   </motion.div>
+
                 </form>
 
-                {/* Divider */}
                 <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: 1.5 }}
-                  className="relative my-6"
-                >
-                  <div className="absolute inset-0 flex items-center">
-                    <div className="w-full border-t border-white/20"></div>
-                  </div>
-                  <div className="relative flex justify-center text-xs">
-                    <span className="px-3 bg-transparent text-white/40">New to Skills Matrix?</span>
-                  </div>
-                </motion.div>
-
-                {/* Create Account Button */}
-                <motion.div
-                  initial={{ y: 20, opacity: 0 }}
-                  animate={{ y: 0, opacity: 1 }}
-                  transition={{ duration: 0.6, delay: 1.6 }}
-                >
-                  <Link href="/register">
-                    <Button
-                      variant="outline"
-                      className="w-full bg-white/5 border-white/30 hover:bg-white/20 text-white font-semibold h-12 rounded-xl transition-all duration-300 group"
-                    >
-                      <UserPlus className="w-4 h-4 mr-2 group-hover:scale-110 transition-transform" />
-                      Create New Account
-                    </Button>
-                  </Link>
-                </motion.div>
-
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: 1.7 }}
                   className="mt-6 text-center text-xs text-white/40 space-y-1"
                 >
-                  <p>🔐 Admin → Admin Dashboard</p>
-                  <p>👔 Manager → Manager Dashboard</p>
-                  <p>👤 Employee → Personal Dashboard</p>
+                  <p>Already have an account?</p>
+                  <Link href="/login" className="text-white/70 hover:text-white transition-colors hover:underline">
+                    Sign In here
+                  </Link>
                 </motion.div>
               </div>
             </motion.div>

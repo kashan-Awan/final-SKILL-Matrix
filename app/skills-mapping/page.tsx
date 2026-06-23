@@ -1,4 +1,4 @@
-﻿"use client";
+﻿﻿"use client";
 
 import React from "react";
 import Link from "next/link";
@@ -8,6 +8,13 @@ import { Button } from "@/components/ui/button";
 import { Plus, FileText, Building, Clock } from "lucide-react";
 import DatabaseLoading from "../components/DatabaseLoading";
 import DatabaseError from "../components/DatabaseError";
+
+console.log("=== NEXT.JS ENV DEBUG ===");
+console.log("DB_HOST:", process.env.DB_HOST);
+console.log("DB_PORT:", process.env.DB_PORT);
+console.log("DB_INSTANCE:", process.env.DB_INSTANCE);
+console.log("=========================");
+
 
 export default function SkillsMapping() {
   const { matrices, loading: matricesLoading, error: matricesError } = useSkillMatrices();
@@ -27,7 +34,7 @@ export default function SkillsMapping() {
   }
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-gradient-to-br from-orange-50 via-blue-50 to-purple-50 p-6">
       <div className="max-w-7xl mx-auto">
         <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-8">
           <div className="text-center">
@@ -75,15 +82,15 @@ export default function SkillsMapping() {
                                      ((matrix as any).skills ? (matrix as any).skills.length : 0);
                     
                     // Find department name
-                    const departmentName = departments.find(d => d.id === (matrix as any).department_id || d.id === matrix.departmentId)?.name || 
+                    const departmentName = departments.find(d => d._id === matrix.departmentId)?.name || 
                                          (matrix as any).department || 
                                          'Unknown Department';
 
                     return (
                       <div
-                        key={matrix.id || matrix._id}
+                        key={matrix._id}
                         className="bg-white rounded-xl p-6 border-2 border-gray-200 hover:border-orange-300 hover:shadow-lg transition-all duration-300 cursor-pointer group"
-                        onClick={() => window.open(`/skills_matrix_maker?matrixId=${matrix.id || matrix._id}`, '_blank')}
+                        onClick={() => window.open(`/skills_matrix_maker?matrixId=${matrix._id}`, '_blank')}
                       >
                         <div className="flex items-start justify-between mb-4">
                           <h3 className="font-bold text-gray-800 text-lg group-hover:text-orange-600 transition-colors">

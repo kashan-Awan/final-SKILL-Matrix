@@ -32,6 +32,11 @@ interface SkillsMatrixData {
   machines: MachineScore[];
 }
 
+// ✅ ADDED: Helper function to get token
+const getToken = () => {
+  return localStorage.getItem('token') || localStorage.getItem('adminToken');
+};
+
 export function useSkillsMatrixScores(departmentId?: string) {
   const [data, setData] = useState<SkillsMatrixData[]>([]);
   const [loading, setLoading] = useState(false);
@@ -47,7 +52,17 @@ export function useSkillsMatrixScores(departmentId?: string) {
         ? `${BACKEND}/dashboard/machine-scores?departmentId=${departmentId}`
         : `${BACKEND}/dashboard/machine-scores`;
       
-      const response = await fetch(url);
+      // ✅ ADDED: Get the token
+      const token = getToken();
+      
+      // ✅ CHANGED: Added headers with Authorization
+      const response = await fetch(url, {
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+        }
+      });
+      
       const result = await response.json();
       
       if (result.success) {

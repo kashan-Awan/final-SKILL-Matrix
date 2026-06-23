@@ -15,11 +15,12 @@ export async function POST(req: NextRequest) {
     }
 
     const db = await getDb();
+    // Use the same robust query logic as the login route
     const result = await db.request()
-      .input('email', String(email).toLowerCase())
+      .input('email', String(email).trim().toLowerCase())
       .query(`
         SELECT
-          u._id        AS id,
+          COALESCE(u._id, u.id) AS id,
           u.email,
           u.role,
           u.employeeId AS employee_id,
@@ -28,7 +29,9 @@ export async function POST(req: NextRequest) {
           d.name AS department_name
         FROM dawlance_user u
         LEFT JOIN departments d ON u.departmentId = d.id AND d.is_deleted = 0
-        WHERE LOWER(u.email) = @email AND u.is_deleted = 0
+        -- Support lookup by email OR employeeId and handle padding
+        WHERE (LOWER(LTRIM(RTRIM(u.email))) = @email OR LOWER(LTRIM(RTRIM(u.employeeId))) = @email)
+          AND (u.is_deleted = 0 OR u.is_deleted IS NULL)
       `);
 
     const user = result.recordset[0];
@@ -40,7 +43,8 @@ export async function POST(req: NextRequest) {
     }
 
     // If role is supplied, confirm it still matches
-    if (role && user.role.toLowerCase() !== String(role).toLowerCase()) {
+    // Use trim() to handle fixed-length CHAR columns in DB
+    if (role && String(user.role).trim().toLowerCase() !== String(role).trim().toLowerCase()) {
       return NextResponse.json(
         { success: false, message: 'Session invalid — role mismatch.' },
         { status: 401 }

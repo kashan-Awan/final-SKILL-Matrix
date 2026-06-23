@@ -2,9 +2,13 @@ import { NextResponse } from 'next/server';
 
 const BACKEND = process.env.BACKEND_API_URL || 'http://localhost:5000/api';
 
-/** Map frontend role 'user' → backend DB role 'employee', others unchanged */
-export const mapRoleToDb = (role: string): string =>
-  role === 'user' ? 'employee' : role;
+/** Map frontend role 'user' → backend DB role 'employee', preserves casing otherwise */
+export const mapRoleToDb = (role: string): string => {
+  const r = role.trim();
+  if (r.toLowerCase() === 'user') return 'employee';
+  // Preserve original casing for other roles to match DB entries exactly
+  return r;
+};
 
 /** Map backend DB role 'employee'/'EMPLOYEE' → frontend role 'user', others lowercased */
 export const mapRoleFromDb = (role: string): string =>
@@ -27,7 +31,22 @@ export async function proxyRequest(
         ...(options?.headers ?? {}),
       },
     });
-    const data = await res.json();
+
+    // Robust parsing to prevent crashes on non-JSON responses (e.g. 500 HTML)
+    let data;
+    // Handle 204 No Content
+    if (res.status === 204) {
+      return new NextResponse(null, { status: 204 });
+    }
+
+    const contentType = res.headers.get('content-type');
+    if (contentType && contentType.includes('application/json')) {
+      data = await res.json();
+    } else {
+      const text = await res.text();
+      data = { success: false, message: text || `Backend error: ${res.status}` };
+    }
+
     return NextResponse.json(data, { status: res.status });
   } catch (error) {
     console.error('[backendClient] proxy error:', error);

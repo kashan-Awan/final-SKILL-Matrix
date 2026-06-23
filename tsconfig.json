@@ -6,6 +6,7 @@
     "skipLibCheck": true,
 
     "strict": true,
+    "forceConsistentCasingInFileNames": true,
     "noEmit": true,
 
     "esModuleInterop": true,
@@ -28,10 +29,11 @@
     "baseUrl": ".",
 
     "paths": {
-      "@/*": ["./*"],
+      "@/*": ["*"],
       "@app/*": ["app/*"],
-      "@components/*": ["components/*"],
-      "@utils/*": ["utils/*"]
+      "@lib/*": ["lib/*"],
+      "@utils/*": ["utils/*"],
+      "@components/*": ["components/*"]
     }
   },
 

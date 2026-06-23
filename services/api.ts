@@ -1,4 +1,3 @@
-// Calls Express backend directly
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
 
 export interface ApiResponse<T> {
@@ -8,15 +7,30 @@ export interface ApiResponse<T> {
   message?: string;
 }
 
+function getToken(): string | null {
+  try {
+    const session = localStorage.getItem('userSession');
+    if (session) {
+      const parsed = JSON.parse(session);
+      if (parsed.token) return parsed.token;
+    }
+    return localStorage.getItem('adminToken');
+  } catch {
+    return null;
+  }
+}
+
 async function request<T>(
   endpoint: string,
   options: RequestInit = {}
 ): Promise<ApiResponse<T>> {
   const url = `${BASE_URL}${endpoint}`;
+  const token = getToken();
 
   const res = await fetch(url, {
     headers: {
       'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...options.headers,
     },
     ...options,

@@ -1,15 +1,21 @@
 import sql from 'mssql';
+import dotenv from 'dotenv';
+
+dotenv.config();
+
+const instance = process.env.DB_INSTANCE || undefined;
 
 const config: sql.config = {
-  server: (process.env.DB_HOST || 'DESKTOP-D6BPQ37\\SQLEXPRESS01').replace(/\\\\/g, '\\'),
-  port: Number(process.env.DB_PORT) || 58525,
-  database: process.env.DB_NAME || 'Dawlance_Skil_Matrix',
+  server: (process.env.DB_HOST || 'localhost').replace(/\\\\/g, '\\'),
+  port: instance ? undefined : (process.env.DB_PORT ? Number(process.env.DB_PORT) : 1433),
+  database: process.env.DB_NAME || 'Dawlance_Skills_Matrix',
   user: process.env.DB_USER || 'sa',
   password: process.env.DB_PASSWORD || 'Admin@1234',
   options: {
     encrypt: false,
     trustServerCertificate: true,
     enableArithAbort: true,
+    instanceName: instance
   },
   pool: {
     max: 10,
@@ -48,7 +54,14 @@ function convertToMssql(mysqlSql: string, params: any[]): { sql: string; params:
   // LIMIT 1 (literal) → SELECT TOP 1 … (remove LIMIT 1, add TOP 1 after first SELECT)
   if (/\bLIMIT\s+1\b/i.test(converted)) {
     converted = converted.replace(/\bLIMIT\s+1\b/gi, '');
-    converted = converted.replace(/\bSELECT\b/i, 'SELECT TOP 1');
+    // Only replace the very first SELECT to avoid breaking subqueries
+    const selectMatch = converted.match(/\bSELECT\b/i);
+    if (selectMatch && selectMatch.index !== undefined) {
+      converted = 
+        converted.slice(0, selectMatch.index) + 
+        'SELECT TOP 1 ' + 
+        converted.slice(selectMatch.index + selectMatch[0].length);
+    }
   }
 
   // LIMIT @pN → OFFSET 0 ROWS FETCH NEXT @pN ROWS ONLY
@@ -84,7 +97,11 @@ async function query<T = any>(mysqlSql: string, params: any[] = []): Promise<[an
   const result = await request.query(finalSql);
 
   if (isInsert) {
-    const insertId = result.recordsets?.[1]?.[0]?.insertId ?? 0;
+    // In MSSQL batches, triggers or session settings can shift results to recordsets[1]
+    // We check both recordset indices for robustness.
+    const insertId = (result.recordsets?.[0]?.[0]?.insertId ?? 
+                      result.recordsets?.[1]?.[0]?.insertId) ?? 0;
+                      
     return [{ insertId, affectedRows: result.rowsAffected?.[0] ?? 0 }, result];
   }
 

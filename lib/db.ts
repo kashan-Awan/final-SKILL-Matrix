@@ -6,16 +6,24 @@
 import sql from 'mssql';
 
 function buildConfig(): sql.config {
+  const instance = process.env.DB_INSTANCE || undefined;
+
   return {
-    server: (process.env.DB_HOST || 'DESKTOP-D6BPQ37\\SQLEXPRESS01').replace(/\\\\/g, '\\'),
-    port: Number(process.env.DB_PORT) || 58525,
-    database: process.env.DB_NAME || 'Dawlance_Skil_Matrix',
+    // If using instanceName, the 'server' field should only be the hostname/IP.
+    // We strip any \Instance part from the host string to avoid connection errors in Tedious.
+    server: (process.env.DB_HOST || 'localhost').split('\\')[0],
+    // If using a named instance, port must be undefined for SQL Browser service to work
+    port: instance ? undefined : (process.env.DB_PORT ? Number(process.env.DB_PORT) : 1433),
+    database: process.env.DB_NAME || 'Dawlance_Skills_Matrix',
     user: process.env.DB_USER || 'sa',
     password: process.env.DB_PASSWORD || 'Admin@1234',
     options: {
       encrypt: false,
       trustServerCertificate: true,
       enableArithAbort: true,
+      instanceName: instance, // Fixed casing: must be instanceName for Tedious
+      tdsVersion: '7_4', // Optimized for SQL Server 2016
+      packetSize: 4096   // Standard packet size often helpful for stability on older SQL versions
     },
     pool: {
       max: 10,
@@ -26,13 +34,38 @@ function buildConfig(): sql.config {
 }
 
 let pool: sql.ConnectionPool | null = null;
+let poolPromise: Promise<sql.ConnectionPool> | null = null;
 
 export async function getDb(): Promise<sql.ConnectionPool> {
-  if (!pool || !pool.connected) {
-    // Use non-global ConnectionPool so we don't conflict with the backend server
-    pool = await new sql.ConnectionPool(buildConfig()).connect();
+  if (pool && pool.connected) return pool;
+  if (poolPromise) {
+    try {
+      return await poolPromise;
+    } catch {
+      poolPromise = null; // Clear cached failure to allow retry
+    }
   }
-  return pool;
+
+  poolPromise = new sql.ConnectionPool(buildConfig()).connect().then(async (newPool) => {
+    // Perform schema initialization on the fresh connection before exposing the pool
+    // This ensures tables exist before the first actual query hits the DB
+    await Promise.all([
+      ensureResetTokensTable(newPool),
+      ensureUserColumns(newPool),
+      ensurePasswordChangeRequestsTable(newPool)
+    ]).catch(err => {
+      console.error('Database schema initialization failed:', err);
+      throw err; // Fail the connection if schema can't be verified
+    });
+
+    pool = newPool;
+    return newPool;
+  }).catch(err => {
+    poolPromise = null;
+    throw err;
+  });
+
+  return poolPromise;
 }
 
 // Memoize so we only run the CREATE TABLE check once per process lifetime
@@ -42,42 +75,46 @@ let resetTokensTableReady = false;
  * Ensure the password_reset_tokens table exists.
  * Only hits the DB on the first call per process.
  */
-export async function ensureResetTokensTable(): Promise<void> {
+export async function ensureResetTokensTable(db: sql.ConnectionPool): Promise<void> {
   if (resetTokensTableReady) return;
-  const db = await getDb();
   await db.request().query(`
-    IF NOT EXISTS (
-      SELECT * FROM sysobjects WHERE name='password_reset_tokens' AND xtype='U'
-    )
+    IF OBJECT_ID('password_reset_tokens', 'U') IS NULL
     CREATE TABLE password_reset_tokens (
       id         INT IDENTITY(1,1) PRIMARY KEY,
       email      NVARCHAR(255) NOT NULL,
       token      NVARCHAR(255) NOT NULL,
-      expires_at DATETIME      NOT NULL,
-      created_at DATETIME      DEFAULT GETDATE()
+      expiresAt  DATETIME2     NOT NULL,
+      createdAt  DATETIME2     DEFAULT GETDATE()
     )
   `);
   resetTokensTableReady = true;
 }
 
 // Memoize so we only run the ALTER TABLE check once per process lifetime
-let userAccountIsActiveReady = false;
+let userColumnsReady = false;
 
 /**
- * Ensure useraccount has an is_active column (SQL Server 2016).
+ * Ensure dawlance_user has necessary columns (is_active, is_deleted).
  * Safe to call multiple times — only executes the ALTER once per process.
  */
-export async function ensureUserAccountIsActive(): Promise<void> {
-  if (userAccountIsActiveReady) return;
-  const db = await getDb();
+export async function ensureUserColumns(db: sql.ConnectionPool): Promise<void> {
+  if (userColumnsReady) return;
   await db.request().query(`
+    -- Check isActive (Matches mysql_setup.sql)
     IF NOT EXISTS (
       SELECT * FROM sys.columns
-      WHERE object_id = OBJECT_ID('useraccount') AND name = 'is_active'
+      WHERE object_id = OBJECT_ID('dawlance_user') AND LOWER(name) = 'isactive'
     )
-    ALTER TABLE useraccount ADD is_active BIT NOT NULL DEFAULT 1
+    ALTER TABLE dawlance_user ADD isActive BIT NOT NULL DEFAULT 1;
+
+    -- Check is_deleted
+    IF NOT EXISTS (
+      SELECT * FROM sys.columns
+      WHERE object_id = OBJECT_ID('dawlance_user') AND name = 'is_deleted'
+    )
+    ALTER TABLE dawlance_user ADD is_deleted BIT NOT NULL DEFAULT 0;
   `);
-  userAccountIsActiveReady = true;
+  userColumnsReady = true;
 }
 
 // Memoize so we only run the CREATE TABLE check once per process lifetime
@@ -87,24 +124,21 @@ let pwdChangeRequestsTableReady = false;
  * Ensure the password_change_requests table exists (SQL Server 2016 compatible).
  * Only hits the DB on the first call per process.
  */
-export async function ensurePasswordChangeRequestsTable(): Promise<void> {
+export async function ensurePasswordChangeRequestsTable(db: sql.ConnectionPool): Promise<void> {
   if (pwdChangeRequestsTableReady) return;
-  const db = await getDb();
   await db.request().query(`
-    IF NOT EXISTS (
-      SELECT * FROM sysobjects WHERE name='password_change_requests' AND xtype='U'
-    )
+    IF OBJECT_ID('password_change_requests', 'U') IS NULL
     CREATE TABLE password_change_requests (
       id                 INT IDENTITY(1,1) PRIMARY KEY,
-      user_id            INT            NOT NULL,
-      user_name          NVARCHAR(255)  NOT NULL,
+      userId             NVARCHAR(24)   NOT NULL,
+      userName           NVARCHAR(255)  NOT NULL,
       email              NVARCHAR(255)  NOT NULL,
       role               NVARCHAR(50)   NOT NULL,
-      new_password_hash  NVARCHAR(255)  NOT NULL,
+      newPasswordHash    NVARCHAR(255)  NOT NULL,
       status             NVARCHAR(20)   NOT NULL DEFAULT 'pending',
-      requested_at       DATETIME       NOT NULL DEFAULT GETDATE(),
-      resolved_at        DATETIME       NULL,
-      resolved_by        NVARCHAR(255)  NULL
+      requestedAt        DATETIME2      NOT NULL DEFAULT GETDATE(),
+      resolvedAt         DATETIME2      NULL,
+      resolvedBy         NVARCHAR(255)  NULL
     )
   `);
   pwdChangeRequestsTableReady = true;

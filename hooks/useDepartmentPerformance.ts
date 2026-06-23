@@ -14,6 +14,11 @@ interface UseDepartmentPerformanceReturn {
   calculateAndRefetch: () => void;
 }
 
+// ✅ ADDED: Helper function to get token
+const getToken = () => {
+  return localStorage.getItem('token') || localStorage.getItem('adminToken');
+};
+
 export function useDepartmentPerformance(year?: number): UseDepartmentPerformanceReturn {
   const [performanceData, setPerformanceData] = useState<DepartmentPerformanceData[]>([]);
   const [loading, setLoading] = useState(true);
@@ -32,7 +37,17 @@ export function useDepartmentPerformance(year?: number): UseDepartmentPerformanc
       });
 
       const BACKEND = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
-      const response = await fetch(`${BACKEND}/dashboard/department-performance?${params}`);
+      
+      // ✅ ADDED: Get the token
+      const token = getToken();
+      
+      // ✅ CHANGED: Added headers with Authorization
+      const response = await fetch(`${BACKEND}/dashboard/department-performance?${params}`, {
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+        }
+      });
       
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);

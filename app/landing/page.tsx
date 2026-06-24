@@ -83,7 +83,7 @@ export default function FridgeManufacturingDashboard() {
   const totalEmployees = employees.length
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-500 via-purple-300 to-slate-500">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
 
       <div className="container mx-auto py-2 space-y-5">
       {/* Header */}
@@ -238,7 +238,7 @@ export default function FridgeManufacturingDashboard() {
                 </Badge>
               )}
               {selectedGender !== "all" && (
-                <Badge variant="secondary" className="bg-pink-100 text-pink-800 border border-pink-200">
+                <Badge variant="secondary" className="bg-gray-100 text-gray-800 border border-gray-200 dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600">
                   Gender: {selectedGender}
                 </Badge>
               )}

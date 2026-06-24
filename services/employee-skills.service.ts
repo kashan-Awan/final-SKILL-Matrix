@@ -17,9 +17,9 @@ export const employeeSkillsService = {
   getAll: (): Promise<ApiResponse<EmployeeSkill[]>> =>
     api.get<EmployeeSkill[]>('/employee-skills'),
 
-  /** GET /api/employee-skills/employee/:employeeId */
+  /** GET /api/employee-skills/:employeeId */
   getByEmployee: (employeeId: string): Promise<ApiResponse<EmployeeSkill[]>> =>
-    api.get<EmployeeSkill[]>(`/employee-skills/employee/${employeeId}`),
+    api.get<EmployeeSkill[]>(`/employee-skills/${employeeId}`),
 
   /** POST /api/employee-skills */
   create: (payload: CreateEmployeeSkillPayload): Promise<ApiResponse<EmployeeSkill>> =>

@@ -162,7 +162,7 @@ export default function DepartmentOverview({ data }: DepartmentOverviewProps) {
     return (
       <div className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          <Card className="border-0 shadow-lg bg-gradient-to-br from-[#3B82F6] to-[#1E40AF] text-white">
+          <Card className="border-0 shadow-lg bg-blue-600 text-white">
             <CardHeader className="pb-2">
               <CardTitle className="text-lg font-medium flex items-center gap-2">
                 <Users className="h-6 w-6" />
@@ -177,7 +177,7 @@ export default function DepartmentOverview({ data }: DepartmentOverviewProps) {
             </CardContent>
           </Card>
 
-          <Card className="border-0 shadow-lg bg-gradient-to-br from-[#F59E0B] to-[#D97706] text-white">
+          <Card className="border-0 shadow-lg bg-yellow-500 text-white">
             <CardHeader className="pb-2">
               <CardTitle className="text-lg font-medium flex items-center gap-2">
                 <Clock className="h-6 w-6" />
@@ -190,7 +190,7 @@ export default function DepartmentOverview({ data }: DepartmentOverviewProps) {
             </CardContent>
           </Card>
 
-          <Card className="border-0 shadow-lg bg-gradient-to-br from-[#10B981] to-[#047857] text-white">
+          <Card className="border-0 shadow-lg bg-green-600 text-white">
             <CardHeader className="pb-2">
               <CardTitle className="text-lg font-medium flex items-center gap-2">
                 <Award className="h-6 w-6" />
@@ -203,7 +203,7 @@ export default function DepartmentOverview({ data }: DepartmentOverviewProps) {
             </CardContent>
           </Card>
 
-          <Card className="border-0 shadow-lg bg-gradient-to-br from-[#3B82F6] to-[#EC4899] text-white">
+          <Card className="border-0 shadow-lg bg-blue-600 text-white">
             <CardHeader className="pb-2">
               <CardTitle className="text-lg font-medium flex items-center gap-2">
                 <Users className="h-6 w-6" />
@@ -215,24 +215,24 @@ export default function DepartmentOverview({ data }: DepartmentOverviewProps) {
                 <div className="flex justify-between items-center">
                   <div className="text-center">
                     <div className="text-2xl font-bold">0</div>
-                    <p className="text-pink-100 text-xs">Men</p>
+                    <p className="text-blue-100 text-xs">Men</p>
                   </div>
                   <div className="text-center">
                     <div className="text-2xl font-bold">0</div>
-                    <p className="text-pink-100 text-xs">Women</p>
+                    <p className="text-green-100 text-xs">Women</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
                   <div
-                    className="flex-1 bg-[#3B82F6] h-2 rounded-l-full"
+                    className="flex-1 bg-blue-400 h-2 rounded-l-full"
                     style={{ width: "50%" }}
                   ></div>
                   <div
-                    className="flex-1 bg-[#EC4899] h-2 rounded-r-full"
+                    className="flex-1 bg-green-400 h-2 rounded-r-full"
                     style={{ width: "50%" }}
                   ></div>
                 </div>
-                <div className="flex justify-between text-xs text-pink-100">
+                <div className="flex justify-between text-xs text-blue-100">
                   <span>0% Men</span>
                   <span>0% Women</span>
                 </div>
@@ -534,7 +534,7 @@ export default function DepartmentOverview({ data }: DepartmentOverviewProps) {
       name: employee.name,
       department: employee.department,
       gender: employee.gender,
-      color: employee.gender === "Female" ? "#EC4899" : "#3B82F6", // Pink for women, blue for men
+      color: employee.gender === "Female" ? "#4ADE80" : "#3B82F6", // Green for women, blue for men
     };
   });
 
@@ -588,7 +588,7 @@ export default function DepartmentOverview({ data }: DepartmentOverviewProps) {
     <div className="space-y-8 p-6 bg-[#F8FAFC] min-h-screen">
       {/* Enhanced Key Metrics Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 ">
-        <Card className="border-0 shadow-lg bg-gradient-to-br from-[#3B82F6] to-[#1E40AF] text-white">
+        <Card className="border-0 shadow-lg bg-blue-600 text-white">
           <CardHeader className="pb-2">
             <CardTitle className="text-lg font-medium flex items-center gap-2">
               <Users className="h-6 w-6" />
@@ -603,7 +603,7 @@ export default function DepartmentOverview({ data }: DepartmentOverviewProps) {
           </CardContent>
         </Card>
 
-        <Card className="border-0 shadow-lg bg-gradient-to-br from-[#10B981] to-[#047857] text-white">
+        <Card className="border-0 shadow-lg bg-green-600 text-white">
           <CardHeader className="pb-2">
             <CardTitle className="text-lg font-medium flex items-center gap-2">
               <Award className="h-6 w-6" />
@@ -621,7 +621,7 @@ export default function DepartmentOverview({ data }: DepartmentOverviewProps) {
           </CardContent>
         </Card>
 
-        <Card className="border-0 shadow-lg bg-gradient-to-br from-[#3B82F6] to-[#EC4899] text-white">
+        <Card className="border-0 shadow-lg bg-blue-600 text-white">
           <CardHeader className="pb-2">
             <CardTitle className="text-lg font-medium flex items-center gap-2">
               <Users className="h-6 w-6" />
@@ -633,16 +633,16 @@ export default function DepartmentOverview({ data }: DepartmentOverviewProps) {
               <div className="flex justify-between items-center">
                 <div className="text-center">
                   <div className="text-2xl font-bold">{maleEmployees}</div>
-                  <p className="text-pink-100 text-xs">Men</p>
+                  <p className="text-blue-100 text-xs">Men</p>
                 </div>
                 <div className="text-center">
                   <div className="text-2xl font-bold">{femaleEmployees}</div>
-                  <p className="text-pink-100 text-xs">Women</p>
+                  <p className="text-green-100 text-xs">Women</p>
                 </div>
               </div>
               <div className="flex items-center gap-2">
                 <div
-                  className="flex-1 bg-[#3B82F6] h-2 rounded-l-full"
+                  className="flex-1 bg-blue-400 h-2 rounded-l-full"
                   style={{
                     width: `${
                       totalEmployees > 0
@@ -652,7 +652,7 @@ export default function DepartmentOverview({ data }: DepartmentOverviewProps) {
                   }}
                 ></div>
                 <div
-                  className="flex-1 bg-[#EC4899] h-2 rounded-r-full"
+                  className="flex-1 bg-green-400 h-2 rounded-r-full"
                   style={{
                     width: `${
                       totalEmployees > 0
@@ -662,7 +662,7 @@ export default function DepartmentOverview({ data }: DepartmentOverviewProps) {
                   }}
                 ></div>
               </div>
-              <div className="flex justify-between text-xs text-pink-100">
+              <div className="flex justify-between text-xs text-blue-100">
                 <span>
                   {totalEmployees > 0
                     ? Math.round((maleEmployees / totalEmployees) * 100)
@@ -685,10 +685,10 @@ export default function DepartmentOverview({ data }: DepartmentOverviewProps) {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Enhanced Skill Distribution */}
         <Card className="border-0 shadow-lg">
-          <CardHeader className="bg-gradient-to-r from-purple-50 to-blue-50 flex flex-row items-center justify-between">
+          <CardHeader className="bg-gray-100 dark:bg-gray-800 flex flex-row items-center justify-between">
             <div>
-              <CardTitle className="flex items-center gap-2 text-[#1E293B]">
-                <Target className="h-5 w-5 text-[#8B5CF6]" />
+              <CardTitle className="flex items-center gap-2 text-gray-900 dark:text-white">
+                <Target className="h-5 w-5 text-gray-500 dark:text-gray-400" />
                 Skill Level Distribution
               </CardTitle>
               <CardDescription>
@@ -775,10 +775,10 @@ export default function DepartmentOverview({ data }: DepartmentOverviewProps) {
 
         {/* Enhanced Gender Distribution */}
         <Card className="border-0 shadow-lg">
-          <CardHeader className="bg-gradient-to-r from-pink-50 to-purple-50 flex flex-row items-center justify-between">
+          <CardHeader className="bg-gray-100 dark:bg-gray-800 flex flex-row items-center justify-between">
             <div>
-              <CardTitle className="flex items-center gap-2 text-[#1E293B]">
-                <Users className="h-5 w-5 text-[#EC4899]" />
+              <CardTitle className="flex items-center gap-2 text-gray-900 dark:text-white">
+                <Users className="h-5 w-5 text-gray-500 dark:text-gray-400" />
                 Gender by Skill Level
               </CardTitle>
               <CardDescription>Diversity across skill levels</CardDescription>
@@ -813,7 +813,7 @@ export default function DepartmentOverview({ data }: DepartmentOverviewProps) {
                   <Bar
                     dataKey="Women"
                     stackId="a"
-                    fill="#EC4899"
+                    fill="#4ADE80"
                     name="Women"
                     radius={[4, 4, 0, 0]}
                   />
@@ -862,10 +862,10 @@ export default function DepartmentOverview({ data }: DepartmentOverviewProps) {
       <div className="grid grid-cols-1 gap-6">
         {/* Department Efficiency */}
         <Card className="border-0 shadow-lg">
-          <CardHeader className="bg-gradient-to-r from-blue-50 to-cyan-50 flex flex-row items-center justify-between">
+          <CardHeader className="bg-gray-100 dark:bg-gray-800 flex flex-row items-center justify-between">
             <div>
-              <CardTitle className="flex items-center gap-2 text-[#1E293B]">
-                <Factory className="h-5 w-5 text-[#3B82F6]" />
+              <CardTitle className="flex items-center gap-2 text-gray-900 dark:text-white">
+                <Factory className="h-5 w-5 text-gray-500 dark:text-gray-400" />
                 Department Overview
               </CardTitle>
               <CardDescription>Size and average skill level</CardDescription>
@@ -966,10 +966,10 @@ export default function DepartmentOverview({ data }: DepartmentOverviewProps) {
 
         {/* Enhanced Department Performance */}
         <Card className="border-0 shadow-lg">
-          <CardHeader className="bg-gradient-to-r from-orange-50 to-red-50 flex flex-row items-center justify-between">
+          <CardHeader className="bg-gray-100 dark:bg-gray-800 flex flex-row items-center justify-between">
             <div>
-              <CardTitle className="flex items-center gap-2 text-[#1E293B]">
-                <Award className="h-5 w-5 text-[#F59E0B]" />
+              <CardTitle className="flex items-center gap-2 text-gray-900 dark:text-white">
+                <Award className="h-5 w-5 text-gray-500 dark:text-gray-400" />
                 Department Performance Trends
               </CardTitle>
               <CardDescription>{chartDescription}</CardDescription>
@@ -1089,10 +1089,10 @@ export default function DepartmentOverview({ data }: DepartmentOverviewProps) {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Years of Experience Distribution */}
         <Card className="border-0 shadow-lg">
-          <CardHeader className="bg-gradient-to-r from-emerald-50 to-green-50 flex flex-row items-center justify-between">
+          <CardHeader className="bg-gray-100 dark:bg-gray-800 flex flex-row items-center justify-between">
             <div>
-              <CardTitle className="flex items-center gap-2 text-[#1E293B]">
-                <Clock className="h-5 w-5 text-[#10B981]" />
+              <CardTitle className="flex items-center gap-2 text-gray-900 dark:text-white">
+                <Clock className="h-5 w-5 text-gray-500 dark:text-gray-400" />
                 Years of Experience Distribution
               </CardTitle>
               <CardDescription>
@@ -1194,10 +1194,10 @@ export default function DepartmentOverview({ data }: DepartmentOverviewProps) {
         {/* add here */}
         {/* Enhanced Experience vs Skill with Bands and Gender Colors */}
         <Card className="border-0 shadow-lg bg-transparent">
-          <CardHeader className="bg-gradient-to-r from-green-50 to-blue-50 flex flex-row items-center justify-between">
+          <CardHeader className="bg-gray-100 dark:bg-gray-800 flex flex-row items-center justify-between">
             <div>
-              <CardTitle className="flex items-center gap-2 text-[#1E293B]">
-                <TrendingUp className="h-5 w-5 text-[#10B981]" />
+              <CardTitle className="flex items-center gap-2 text-gray-900 dark:text-white">
+                <TrendingUp className="h-5 w-5 text-gray-500 dark:text-gray-400" />
                 Experience vs Skill Correlation
               </CardTitle>
               <CardDescription>
@@ -1339,7 +1339,7 @@ export default function DepartmentOverview({ data }: DepartmentOverviewProps) {
                               <span className="text-sm text-gray-600">Men</span>
                             </div>
                             <div className="flex items-center gap-2">
-                              <div className="w-3 h-3 rounded-full bg-[#EC4899]"></div>
+                              <div className="w-3 h-3 rounded-full bg-[#4ADE80]"></div>
                               <span className="text-sm text-gray-600">
                                 Women
                               </span>

@@ -34,11 +34,11 @@ export default function SkillsMapping() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-orange-50 via-blue-50 to-purple-50 p-6">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-6">
       <div className="max-w-7xl mx-auto">
         <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-8">
           <div className="text-center">
-            <h1 className="text-4xl font-bold bg-gradient-to-r from-orange-500 to-blue-500 bg-clip-text text-transparent mb-4">
+            <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-4">
               Skills Mapping
             </h1>
             <p className="text-gray-600 mb-8">
@@ -47,7 +47,7 @@ export default function SkillsMapping() {
             
             <div className="flex justify-center mb-6">
               <Link href="/skills_matrix_maker">
-                <Button className="bg-gradient-to-r from-orange-500 to-blue-500 hover:from-orange-600 hover:to-blue-600 text-white px-8 py-3 text-lg">
+                <Button className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 text-white px-8 py-3 text-lg">
                   <Plus className="h-5 w-5 mr-2" />
                   Create New Skills Matrix
                 </Button>
@@ -55,16 +55,16 @@ export default function SkillsMapping() {
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
-              <div className="bg-gradient-to-r from-orange-100 to-orange-200 rounded-xl p-6">
-                <h3 className="text-xl font-semibold text-orange-800 mb-2">Skill Matrices</h3>
-                <p className="text-3xl font-bold text-orange-600">{matrices.length}</p>
-                <p className="text-orange-700">Total matrices available</p>
+              <div className="bg-gray-100 dark:bg-gray-800 rounded-xl p-6">
+                <h3 className="text-xl font-semibold text-gray-800 dark:text-gray-200 mb-2">Skill Matrices</h3>
+                <p className="text-3xl font-bold text-gray-600 dark:text-gray-400">{matrices.length}</p>
+                <p className="text-gray-700 dark:text-gray-300">Total matrices available</p>
               </div>
               
-              <div className="bg-gradient-to-r from-blue-100 to-blue-200 rounded-xl p-6">
-                <h3 className="text-xl font-semibold text-blue-800 mb-2">Departments</h3>
-                <p className="text-3xl font-bold text-blue-600">{departments.length}</p>
-                <p className="text-blue-700">Active departments</p>
+              <div className="bg-gray-100 dark:bg-gray-800 rounded-xl p-6">
+                <h3 className="text-xl font-semibold text-gray-800 dark:text-gray-200 mb-2">Departments</h3>
+                <p className="text-3xl font-bold text-gray-600 dark:text-gray-400">{departments.length}</p>
+                <p className="text-gray-700 dark:text-gray-300">Active departments</p>
               </div>
             </div>
 

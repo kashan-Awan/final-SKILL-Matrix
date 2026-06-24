@@ -81,40 +81,49 @@ export default function EmployeesPage() {
     }[]
   >([]);
 
+  const [allSkills, setAllSkills] = useState<any[]>([]);
+
   useEffect(() => {
     // Simulate API call
     const fetchData = async () => {
       setIsLoading(true);
       try {
-        const [empResult, deptResult] = await Promise.all([
+        const [empResult, deptResult, skillsResult] = await Promise.all([
             employeesService.getAll(),
             departmentsService.getAll(),
+            skillsService.getAll(),
         ]);
 
         const empData = empResult;
         const deptData = deptResult;
+        const allSkillsData = skillsResult;
 
-        if (deptData.success && empResult.success) {
+        if (deptData.success && empResult.success && allSkillsData.success) {
           const departmentsList = (deptData.data ?? []) as any;
           setDepartments(departmentsList);
+          setAllSkills(allSkillsData.data ?? []);
           
-          // Now map employees with department names using the fetched departments
-          const employees = (empData.data ?? []).map((emp: any) => {
-            return {
-                ...emp,
-                skills: emp.skills || {},
-                totalSkills: Object.keys(emp.skills || {}).length,
-                department: getDepartmentNameFromList(
-                  emp.departmentId,
-                  departmentsList
-                ),
-            };
-          });
-          setEmployees(employees);
+          const employeesWithSkills = await Promise.all(
+            (empData.data ?? []).map(async (emp: any) => {
+              const skillsResult = await employeeSkillsService.getByEmployee(emp.id);
+              const skills = skillsResult.success ? skillsResult.data : [];
+              return {
+                  ...emp,
+                  skills: skills || [],
+                  totalSkills: skills?.length || 0,
+                  department: getDepartmentNameFromList(
+                    emp.departmentId,
+                    departmentsList
+                  ),
+              };
+            })
+          );
+
+          setEmployees(employeesWithSkills);
 
           // Calculate department metrics after both employees and departments are set
           const metrics = calculateDepartmentMetricsFromData(
-            employees,
+            employeesWithSkills,
             departmentsList
           );
           setDepartmentMetrics(metrics);
@@ -325,7 +334,7 @@ export default function EmployeesPage() {
       key: "department", 
       label: "Department",
       render: (value: any, row: any) => (
-        <Badge variant="outline" className="bg-gradient-to-r from-purple-50 to-purple-100 text-purple-800 border-purple-200 font-medium">
+        <Badge variant="outline" className="bg-gray-100 text-gray-800 border-gray-200 dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600 font-medium">
           {value}
         </Badge>
       )
@@ -337,7 +346,7 @@ export default function EmployeesPage() {
         <span className={`px-3 py-1 rounded-full text-xs font-medium ${
           value === "MALE"
             ? "bg-blue-100 text-blue-800 border border-blue-200"
-            : "bg-pink-100 text-pink-800 border border-pink-200"
+            : "bg-purple-100 text-purple-800 border border-purple-200"
         }`}>
           {value}
         </span>
@@ -348,31 +357,35 @@ export default function EmployeesPage() {
       label: "Skills",
       render: (value: any, row: any) => (
         <div className="flex flex-wrap gap-1 max-w-xs">
-          {value && typeof value === "object" && Object.keys(value).length > 0 ? (
-            Object.entries(value).slice(0, 3).map(([skill, level]: [string, any]) => (
-              <Badge
-                key={skill}
-                variant="outline"
-                className={`text-xs px-2 py-1 border ${
-                  level === "Beginner"
-                    ? "bg-yellow-50 text-yellow-800 border-yellow-200"
-                    : level === "Intermediate"
-                    ? "bg-orange-50 text-orange-800 border-orange-200"
-                    : level === "Advanced"
-                    ? "bg-green-50 text-green-800 border-green-200"
-                    : level === "Expert"
-                    ? "bg-blue-50 text-blue-800 border-blue-200"
-                    : "bg-gray-50 text-gray-800 border-gray-200"
-                }`}
-              >
-                {skill}
-              </Badge>
-            ))
+          {Array.isArray(value) && value.length > 0 ? (
+            value.slice(0, 3).map((skill: any) => {
+              const foundSkill = allSkills.find(s => s._id === skill.skillId);
+              const skillName = foundSkill ? foundSkill.name : 'Unknown';
+              return (
+                <Badge
+                  key={skill.skillId}
+                  variant="outline"
+                  className={`text-xs px-2 py-1 border ${
+                    skill.level === "Beginner"
+                      ? "bg-yellow-50 text-yellow-800 border-yellow-200"
+                      : skill.level === "Intermediate"
+                      ? "bg-orange-50 text-orange-800 border-orange-200"
+                      : skill.level === "Advanced"
+                      ? "bg-green-50 text-green-800 border-green-200"
+                      : skill.level === "Expert"
+                      ? "bg-blue-50 text-blue-800 border-blue-200"
+                      : "bg-gray-50 text-gray-800 border-gray-200"
+                  }`}
+                >
+                  {skillName}
+                </Badge>
+              );
+            })
           ) : (
             <span className="text-sm text-gray-500 italic">No skills</span>
           )}
-          {value && typeof value === "object" && Object.keys(value).length > 3 && (
-            <span className="text-xs text-gray-500">+{Object.keys(value).length - 3} more</span>
+          {Array.isArray(value) && value.length > 3 && (
+            <span className="text-xs text-gray-500">+{value.length - 3} more</span>
           )}
         </div>
       )
@@ -585,7 +598,7 @@ export default function EmployeesPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
 
       <div className="p-6">
         <div className="w-full space-y-8">
@@ -598,8 +611,8 @@ export default function EmployeesPage() {
           <Card className="shadow-lg border-0 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm">
             <CardHeader>
               <CardTitle className="flex items-center gap-3 text-xl">
-                <div className="p-2 bg-purple-100 dark:bg-purple-900 rounded-lg">
-                  <Award className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+                <div className="p-2 bg-gray-100 dark:bg-gray-900 rounded-lg">
+                  <Award className="h-5 w-5 text-gray-600 dark:text-gray-400" />
                 </div>
                 Department Metrics
               </CardTitle>
@@ -612,7 +625,7 @@ export default function EmployeesPage() {
                 {departmentMetrics.map((metric) => (
                   <Card
                     key={metric.departmentId}
-                    className="border-2 border-purple-200 dark:border-purple-800 bg-gradient-to-r from-purple-50/50 to-blue-50/50 dark:from-purple-950/50 dark:to-blue-950/50"
+                    className="border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"
                   >
                     <CardHeader className="pb-2 space-y-2">
                       <div className="flex justify-between items-start">
@@ -648,7 +661,7 @@ export default function EmployeesPage() {
                             <span className="font-semibold">Top Performer</span>
                           </div>
                           <div className="flex items-start gap-4">
-                            <div className="w-12 h-12 bg-gradient-to-br from-purple-600 to-blue-600 rounded-xl flex items-center justify-center shadow-lg">
+                            <div className="w-12 h-12 bg-gray-200 dark:bg-gray-700 rounded-xl flex items-center justify-center">
                               <User className="h-6 w-6 text-white" />
                             </div>
                             <div>
@@ -718,16 +731,16 @@ export default function EmployeesPage() {
                     value={selectedDepartmentFilter}
                     onValueChange={setSelectedDepartmentFilter}
                   >
-                    <SelectTrigger className="h-12 border-2 border-gray-200 dark:border-gray-700 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 dark:focus:ring-purple-800 transition-all duration-200 bg-white dark:bg-gray-800 shadow-sm hover:shadow-md">
+                    <SelectTrigger className="h-12 border-2 border-gray-200 dark:border-gray-700 focus:border-gray-500 focus:ring-2 focus:ring-gray-200 dark:focus:ring-gray-800 transition-all duration-200 bg-white dark:bg-gray-800 shadow-sm hover:shadow-md">
                       <SelectValue placeholder="Filter by Department" />
                     </SelectTrigger>
                     <SelectContent className="border-2 border-gray-200 dark:border-gray-700 shadow-lg">
-                      <SelectItem value="all" className="hover:bg-purple-50 dark:hover:bg-purple-900/20">All Departments</SelectItem>
+                      <SelectItem value="all" className="hover:bg-gray-50 dark:hover:bg-gray-900/20">All Departments</SelectItem>
                       {departments.map((dept) => (
                         <SelectItem 
                           key={dept.id} 
                           value={dept.id?.toString() || ""}
-                          className="hover:bg-purple-50 dark:hover:bg-purple-900/20"
+                          className="hover:bg-gray-50 dark:hover:bg-gray-900/20"
                         >
                           {dept.name}
                         </SelectItem>
@@ -753,7 +766,7 @@ export default function EmployeesPage() {
                       Active Filters:
                     </span>
                     {searchEmployeeId && (
-                      <Badge variant="outline" className="bg-gradient-to-r from-blue-50 to-blue-100 text-blue-800 border-blue-300 shadow-sm hover:shadow-md transition-all duration-200">
+                      <Badge variant="outline" className="bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900 dark:text-blue-300 dark:border-blue-800 shadow-sm hover:shadow-md transition-all duration-200">
                         Search: "{searchEmployeeId}"
                         <Button
                           variant="ghost"
@@ -766,12 +779,12 @@ export default function EmployeesPage() {
                       </Badge>
                     )}
                     {selectedDepartmentFilter !== "all" && (
-                      <Badge variant="outline" className="bg-gradient-to-r from-purple-50 to-purple-100 text-purple-800 border-purple-300 shadow-sm hover:shadow-md transition-all duration-200">
+                      <Badge variant="outline" className="bg-gray-100 text-gray-800 border-gray-200 dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600 shadow-sm hover:shadow-md transition-all duration-200">
                         Department: {getDepartmentName(selectedDepartmentFilter)}
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="ml-2 p-0 h-4 w-4 hover:bg-purple-200 rounded-full transition-colors duration-200"
+                          className="ml-2 p-0 h-4 w-4 hover:bg-gray-200 rounded-full transition-colors duration-200"
                           onClick={() => setSelectedDepartmentFilter("all")}
                         >
                           <X className="h-3 w-3" />
@@ -786,7 +799,7 @@ export default function EmployeesPage() {
                           setSearchEmployeeId("");
                           setSelectedDepartmentFilter("all");
                         }}
-                        className="text-xs bg-gradient-to-r from-gray-50 to-gray-100 hover:from-gray-100 hover:to-gray-200 border-gray-300 text-gray-700 shadow-sm hover:shadow-md transition-all duration-200"
+                        className="text-xs bg-gray-100 hover:bg-gray-200 text-gray-800 border-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-gray-200 dark:border-gray-600 shadow-sm hover:shadow-md transition-all duration-200"
                       >
                         Clear All
                       </Button>
@@ -801,11 +814,11 @@ export default function EmployeesPage() {
 
                   {/* Show individual employee card only if there's a search term AND results */}
                   {searchedEmployee && searchEmployeeId.trim() ? (
-                    <Card className="border-2 border-blue-200 dark:border-blue-800 bg-gradient-to-r from-blue-50/50 to-purple-50/50 dark:from-blue-950/50 dark:to-purple-950/50">
+                    <Card className="border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
                       <CardContent className="p-6">
                         <div className="flex items-start gap-6">
                           <div className="flex-shrink-0">
-                            <div className="w-16 h-16 bg-gradient-to-br from-blue-600 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
+                            <div className="w-16 h-16 bg-gray-200 dark:bg-gray-700 rounded-xl flex items-center justify-center">
                               <User className="h-8 w-8 text-white" />
                             </div>
                           </div>
@@ -830,7 +843,7 @@ export default function EmployeesPage() {
                                   });
                                 }}
                                 disabled={isLoadingWorkHistory}
-                                className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white shadow-lg"
+                                className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 text-white shadow-lg"
                               >
                                 <Award className="h-4 w-4 mr-2" />
                                 {isLoadingWorkHistory ? "Loading..." : "Inspect Skills"}
@@ -1153,7 +1166,7 @@ export default function EmployeesPage() {
           <Button
             onClick={() => setIsModalOpen(true)}
             size="lg"
-            className="h-14 w-14 rounded-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 shadow-2xl border-0"
+            className="h-14 w-14 rounded-full bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 shadow-2xl border-0"
             title="Add New Employee"
           >
             <Plus className="h-6 w-6" />

@@ -125,7 +125,7 @@ export default function SkillLevelBreakdown({
           <Bar
             dataKey="Female Advanced"
             stackId="Advanced"
-            fill="#be185d"
+            fill="#166534"
             name="Advanced - Female"
           />
 
@@ -139,7 +139,7 @@ export default function SkillLevelBreakdown({
           <Bar
             dataKey="Female High"
             stackId="High"
-            fill="#ec4899"
+            fill="#16a34a"
             name="High - Female"
           />
 
@@ -153,7 +153,7 @@ export default function SkillLevelBreakdown({
           <Bar
             dataKey="Female Medium"
             stackId="Medium"
-            fill="#a855f7"
+            fill="#4ade80"
             name="Medium - Female"
           />
 
@@ -167,7 +167,7 @@ export default function SkillLevelBreakdown({
           <Bar
             dataKey="Female Low"
             stackId="Low"
-            fill="#c084fc"
+            fill="#bbf7d0"
             name="Low - Female"
           />
         </BarChart>

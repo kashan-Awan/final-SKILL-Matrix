@@ -47,6 +47,7 @@ interface PasswordRequest {
   resolved_by: string | null;
 }
 
+
 type ActiveTab = 'overview' | 'management' | 'requests';
 
 function fmtDate(iso: string | null) {
@@ -108,14 +109,23 @@ export default function AdminDashboard() {
       });
       const data = await res.json();
       
-      // The API might be returning an array directly, or an object with a `data` property.
-      const usersData = data.success ? data.data : data;
+      // API contract (backend):
+      // { success: true, data: { users: [...], stats: {...} } }
+      // But some implementations may return an array directly.
 
-      if (Array.isArray(usersData)) {
-        setUsers(usersData);
+      const usersData = data?.success ? data?.data : data;
+
+      const normalizedUsers = Array.isArray(usersData)
+        ? usersData
+        : Array.isArray((usersData as any)?.users)
+          ? (usersData as any).users
+          : [];
+
+      if (normalizedUsers.length > 0 || (usersData && typeof usersData === 'object')) {
+        setUsers(normalizedUsers);
       } else {
         showToast('Failed to load users: invalid format.', 'err');
-        setUsers([]); // fallback to empty array
+        setUsers([]);
       }
     } catch {
       showToast('Network error while loading users.', 'err');
@@ -125,21 +135,43 @@ export default function AdminDashboard() {
   }, [router]);
 
   const fetchRequests = useCallback(async () => {
+    // Pending *registration approvals* (aligns with /admin/approve-registrations)
     setReqLoading(true);
     const token = getToken();
     if (!token) {
       router.push('/login');
       return;
     }
+
     try {
-      const res = await fetch('/api/admin/password-requests?status=pending', {
-        headers: { Authorization: `Bearer ${token}` }
+      const res = await fetch('/api/auth/registrations?status=pending', {
+        headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
-      if (data.success) setRequests(data.data ?? []);
-      else showToast(data.message || 'Failed to load requests', 'err');
+
+      // expected:
+      // { success: true, requests: [...], counts: {...} }
+      if (data?.success) {
+      // Backend GET /api/auth/registrations returns { success, requests, counts }
+      const requestsFromApi = data?.requests ?? data?.data?.requests ?? [];
+      const mapped = (requestsFromApi ?? []).map((r: any) => ({
+        id: String(r.id),
+        user_id: String(r.id),
+        user_name: r.name,
+        email: r.email,
+        role: r.role,
+        status: r.status,
+        requested_at: r.requestedAt,
+        resolved_at: r.resolvedAt,
+        resolved_by: null,
+      }));
+      setRequests(mapped);
+
+      } else {
+        showToast(data?.message || 'Failed to load pending registrations', 'err');
+      }
     } catch {
-      showToast('Network error while loading requests.', 'err');
+      showToast('Network error while loading pending registrations.', 'err');
     } finally {
       setReqLoading(false);
     }
@@ -269,9 +301,14 @@ export default function AdminDashboard() {
     }
   };
 
-  const pendingCount = requests.filter(r => r.status === 'pending').length;
-  const adminCount   = users.filter(u => u.role === 'admin').length;
-  const managerCount = users.filter(u => u.role === 'manager').length;
+  const pendingCount = requests.length > 0 ? requests.filter((r) => r.status === 'pending').length : 0;
+
+  const adminCount = users.filter(
+    (u) => (u.role ?? '').toString().toLowerCase() === 'admin'
+  ).length;
+  const managerCount = users.filter(
+    (u) => (u.role ?? '').toString().toLowerCase() === 'manager'
+  ).length;
 
   // ── Render (FULL JSX – same as your original) ───────────────────────────
   return (
@@ -315,19 +352,36 @@ export default function AdminDashboard() {
             { label: 'Admins',           value: adminCount,   Icon: Shield, hi: false },
             { label: 'Managers',         value: managerCount, Icon: User,   hi: false },
             { label: 'Pending Requests', value: pendingCount, Icon: Clock,  hi: pendingCount > 0 },
-          ].map(({ label, value, Icon, hi }) => (
-            <div
-              key={label}
-              className={`rounded-xl p-5 border flex items-center justify-between
-                ${hi ? 'bg-yellow-500/20 border-yellow-400/40' : 'bg-white/10 border-white/20'}`}
-            >
-              <div>
-                <p className="text-white/60 text-xs mb-1">{label}</p>
-                <p className="text-2xl font-bold text-white">{value}</p>
+          ].map(({ label, value, Icon, hi }) => {
+            const isPendingCard = label === 'Pending Requests';
+            return (
+              <div
+                key={label}
+                role={isPendingCard ? 'button' : undefined}
+                tabIndex={isPendingCard ? 0 : undefined}
+                onClick={() => {
+                  if (!isPendingCard) return;
+                  router.push('/admin/approvals/pending-requests');
+                }}
+                onKeyDown={(e) => {
+                  if (!isPendingCard) return;
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    router.push('/admin/approvals/pending-requests');
+                  }
+                }}
+                aria-label={isPendingCard ? 'Open pending requests' : undefined}
+                className={`rounded-xl p-5 border flex items-center justify-between
+                  ${hi ? 'bg-yellow-500/20 border-yellow-400/40' : 'bg-white/10 border-white/20'}
+                  ${isPendingCard ? 'cursor-pointer hover:bg-white/15 transition-colors' : ''}`}
+              >
+                <div>
+                  <p className="text-white/60 text-xs mb-1">{label}</p>
+                  <p className="text-2xl font-bold text-white">{value}</p>
+                </div>
+                <Icon className={`w-8 h-8 ${hi ? 'text-yellow-300' : 'text-white/40'}`} />
               </div>
-              <Icon className={`w-8 h-8 ${hi ? 'text-yellow-300' : 'text-white/40'}`} />
-            </div>
-          ))}
+            );
+          })}
         </motion.div>
 
         {/* Tabs */}

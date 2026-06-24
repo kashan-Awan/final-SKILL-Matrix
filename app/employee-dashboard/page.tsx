@@ -179,7 +179,7 @@ export default function EmployeeDashboard() {
       }
 
       try {
-        const machinesData = await api.get('/employees/machines');
+        const machinesData = await api.get('/users/machines');
         if (machinesData.success) {
           setMachines((machinesData.data as Machine[]) || []);
         }
@@ -188,7 +188,7 @@ export default function EmployeeDashboard() {
       }
 
       try {
-        const shiftData = await api.get('/employees/shift');
+        const shiftData = await api.get('/users/shift');
         if (shiftData.success && shiftData.data) {
           setShift(shiftData.data as Shift);
         } else {

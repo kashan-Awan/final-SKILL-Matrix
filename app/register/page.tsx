@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
-import { User, Mail, Lock, Rocket, Star, Cloud, Sparkles, UserPlus, Briefcase } from "lucide-react"
+import { User, Mail, Lock, Rocket, Star, Cloud, Sparkles, UserPlus, Briefcase, Eye, EyeOff } from "lucide-react"
 
 export default function RegisterPage() {
   const [showPassword, setShowPassword] = useState(false)
@@ -28,10 +28,16 @@ export default function RegisterPage() {
     setSuccessMessage("")
 
     try {
-      const response = await fetch('http://localhost:5001/api/registration/request', {
+      const response = await fetch('http://localhost:5001/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, email, password, role: userRole, employeeId: employeeId || undefined })
+        body: JSON.stringify({
+          name,
+          email,
+          password,
+          role: userRole.toUpperCase(),
+          employeeId: employeeId?.trim() ? employeeId : null,
+        }),
       })
 
       const result = await response.json()
@@ -66,7 +72,7 @@ export default function RegisterPage() {
       {floatingShapes.map((shape) => (
         <motion.div
           key={shape.id}
-          className={`absolute ${shape.size} ${shape.position} rounded-3xl bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-sm`}
+          className={`absolute ${shape.size} ${shape.position} rounded-3xl bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-sm pointer-events-none`}
           animate={{ y: [0, -20, 0], rotate: [0, 180, 360], scale: [1, 1.1, 1] }}
           transition={{ duration: 6, delay: shape.delay, repeat: Number.POSITIVE_INFINITY, ease: "easeInOut" }}
         />

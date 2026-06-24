@@ -16,8 +16,9 @@ export default function AddUserPage() {
     name: "",
     email: "",
     password: "",
-    role: "EMPLOYEE",
+    role: "employee",
     employeeId: "",
+
     departmentId: "",
     phone: "",
     gender: "",
@@ -61,8 +62,10 @@ export default function AddUserPage() {
         },
         body: JSON.stringify({
           ...form,
+          employeeId: form.employeeId?.trim() ? form.employeeId : undefined,
           yearsExperience: form.yearsExperience ? parseInt(form.yearsExperience) : null,
           hireDate: form.hireDate || null,
+          role: form.role?.toLowerCase(),
         }),
       });
       const data = await res.json();
@@ -112,14 +115,14 @@ export default function AddUserPage() {
         </div>
         <div>
           <Label>Role *</Label>
-          <select
+          <select aria-label="Role"
             className="w-full border rounded p-2"
             value={form.role}
             onChange={(e) => setForm({ ...form, role: e.target.value })}
           >
-            <option value="EMPLOYEE">Employee</option>
-            <option value="MANAGER">Manager</option>
-            <option value="ADMIN">Admin</option>
+            <option value="employee">Employee</option>
+            <option value="manager">Manager</option>
+            <option value="admin">Admin</option>
           </select>
         </div>
         <div>
@@ -132,6 +135,7 @@ export default function AddUserPage() {
         <div>
           <Label>Department</Label>
           <select
+            aria-label="Department"
             className="w-full border rounded p-2"
             value={form.departmentId}
             onChange={(e) => setForm({ ...form, departmentId: e.target.value })}
@@ -153,7 +157,7 @@ export default function AddUserPage() {
         </div>
         <div>
           <Label>Gender</Label>
-          <select
+          <select aria-label="Gender"
             className="w-full border rounded p-2"
             value={form.gender}
             onChange={(e) => setForm({ ...form, gender: e.target.value })}

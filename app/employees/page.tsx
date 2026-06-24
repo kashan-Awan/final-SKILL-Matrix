@@ -418,21 +418,50 @@ export default function EmployeesPage() {
         employeeData = matchedEmployee || employee;
       }
 
+      // Fetch skills using the employee-skills endpoints (manager/admin route)
+      // Backend: GET /api/users/manager/employees/:employeeId/skills
+      let skillsMap: Record<string, string> = (employeeData.skills as any) || {};
+      if (targetId) {
+        try {
+          const result = await employeeSkillsService.getByEmployee(targetId);
+          if (result?.success && Array.isArray(result.data)) {
+            // Convert array records into the map shape expected by EmployeeInspectionModal
+            // UI expects: { [skillNameOrId]: level }
+            skillsMap = result.data.reduce((acc: Record<string, string>, s: any) => {
+              const key =
+                s?.skillId?.toString() ||
+                s?.skill?.toString() ||
+                s?.skillName?.toString() ||
+                "";
+              if (!key) return acc;
+              acc[key] = s?.level?.toString() || "None";
+              return acc;
+            }, {});
+          }
+        } catch (e) {
+          console.error("Error fetching employee skills:", e);
+          // keep fallback skillsMap
+        }
+      }
+
       // Create the work history format that the modal expects
       const workHistoryData = {
         success: true,
-        data: [{
-          displayId: employeeData.displayId || employeeData.employeeId,
-          name: employeeData.name,
-          gender: employeeData.gender,
-          departmentId: employeeData.departmentId,
-          skills: employeeData.skills || {}, // Pass skills directly as object
-        }]
+        data: [
+          {
+            displayId: employeeData.displayId || employeeData.employeeId,
+            name: employeeData.name,
+            gender: employeeData.gender,
+            departmentId: employeeData.departmentId,
+            skills: skillsMap || {},
+          },
+        ],
       };
-      
+
       setEmployeeWorkHistory(workHistoryData);
       setSelectedEmployeeForInspection(employeeData);
     } catch (error) {
+
       console.error("Error fetching employee data:", error);
       
       // Fall back to original behavior if API call fails

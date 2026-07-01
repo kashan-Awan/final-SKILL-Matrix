@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { motion } from "framer-motion";
-import { Search, User, Award, Plus, X } from "lucide-react";
+import { Search, User, Award, Plus, X, Building2, Trophy, Briefcase, Filter, CalendarDays, MoreHorizontal, Mail, Phone, MapPin, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -53,6 +53,7 @@ export default function EmployeesPage() {
   const [employeeWorkHistory, setEmployeeWorkHistory] = useState<any>(null);
   const [isLoadingWorkHistory, setIsLoadingWorkHistory] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
   type SkillInput = { name: string; level: string };
   type EmployeeFormData = {
     name: string;
@@ -295,6 +296,18 @@ export default function EmployeesPage() {
   // Check if we have results to show (either from search or filter)
   const hasResults = filteredEmployees.length > 0;
 
+  // Reset page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchEmployeeId, selectedDepartmentFilter]);
+
+  const itemsPerPage = 10;
+  const totalPages = Math.ceil(filteredEmployees.length / itemsPerPage);
+  const paginatedEmployees = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    return filteredEmployees.slice(startIndex, startIndex + itemsPerPage);
+  }, [filteredEmployees, currentPage, itemsPerPage]);
+
   const getSkillColor = (level: string) => {
     switch (level) {
       case "Expert":
@@ -343,7 +356,7 @@ export default function EmployeesPage() {
       key: "gender", 
       label: "Gender",
       render: (value: any, row: any) => (
-        <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+        <span className={`px-3 py-1 rounded-full text-sm font-medium ${
           value === "MALE"
             ? "bg-blue-100 text-blue-800 border border-blue-200"
             : "bg-purple-100 text-purple-800 border border-purple-200"
@@ -358,14 +371,14 @@ export default function EmployeesPage() {
       render: (value: any, row: any) => (
         <div className="flex flex-wrap gap-1 max-w-xs">
           {Array.isArray(value) && value.length > 0 ? (
-            value.slice(0, 3).map((skill: any) => {
-              const foundSkill = allSkills.find(s => s._id === skill.skillId);
+            value.slice(0, 3).map((skill: any, index: number) => {
+              const foundSkill = allSkills.find(s => s._id === skill.skillId || s.id === skill.skillId);
               const skillName = foundSkill ? foundSkill.name : 'Unknown';
               return (
                 <Badge
-                  key={skill.skillId}
+                  key={`${skill.skillId || skill.id || 'skill'}-${index}`}
                   variant="outline"
-                  className={`text-xs px-2 py-1 border ${
+                  className={`text-sm px-2 py-1 border ${
                     skill.level === "Beginner"
                       ? "bg-yellow-50 text-yellow-800 border-yellow-200"
                       : skill.level === "Intermediate"
@@ -385,7 +398,7 @@ export default function EmployeesPage() {
             <span className="text-sm text-gray-500 italic">No skills</span>
           )}
           {Array.isArray(value) && value.length > 3 && (
-            <span className="text-xs text-gray-500">+{value.length - 3} more</span>
+            <span className="text-sm text-gray-500">+{value.length - 3} more</span>
           )}
         </div>
       )
@@ -394,7 +407,7 @@ export default function EmployeesPage() {
       key: "totalSkills", 
       label: "Total Skills",
       render: (value: any, row: any) => (
-        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 border border-green-200">
+        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-sm font-medium bg-green-100 text-green-800 border border-green-200">
           {value || 0}
         </span>
       )
@@ -602,6 +615,30 @@ export default function EmployeesPage() {
 
       <div className="p-6">
         <div className="w-full space-y-8">
+        
+        {/* Page Title & Actions */}
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+          <div>
+            <h1 className="text-3xl font-extrabold tracking-tight bg-gradient-to-r from-gray-950 to-gray-700 dark:from-white dark:to-slate-400 bg-clip-text text-transparent">
+              Workforce Directory
+            </h1>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+              Monitor department operator density, analyze top performance, and inspect individual skill matrix levels.
+            </p>
+          </div>
+          {permissions.canAddEmployee && (
+            <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} className="hidden md:block">
+              <Button
+                onClick={() => setIsModalOpen(true)}
+                className="bg-blue-600 hover:bg-blue-700 text-white font-semibold shadow-md flex items-center gap-2 px-4 py-2.5 h-auto text-sm border-0"
+              >
+                <Plus className="h-4 w-4" />
+                Add New Employee
+              </Button>
+            </motion.div>
+          )}
+        </div>
+
         {/* Department Metrics Section */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -609,80 +646,117 @@ export default function EmployeesPage() {
           transition={{ duration: 0.5 }}
         >
           <Card className="shadow-lg border-0 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-3 text-xl">
-                <div className="p-2 bg-gray-100 dark:bg-gray-900 rounded-lg">
-                  <Award className="h-5 w-5 text-gray-600 dark:text-gray-400" />
+            <CardHeader className="border-b border-gray-100 dark:border-gray-700/50 pb-4">
+              <CardTitle className="flex items-center gap-3 text-xl font-bold text-gray-900 dark:text-white">
+                <div className="p-2.5 bg-indigo-50 dark:bg-indigo-950/40 rounded-xl text-indigo-600 dark:text-indigo-400">
+                  <Building2 className="h-5 w-5" />
                 </div>
-                Department Metrics
+                Department Performance &amp; Metrics
               </CardTitle>
-              <CardDescription className="text-base">
-                Overview of employee counts and top performers by department
+              <CardDescription className="text-sm text-gray-500 dark:text-gray-400">
+                Live operational metrics, department operator counts, and top performers by facility department.
               </CardDescription>
             </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {departmentMetrics.map((metric) => (
-                  <Card
-                    key={metric.departmentId}
-                    className="border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"
-                  >
-                    <CardHeader className="pb-2 space-y-2">
-                      <div className="flex justify-between items-start">
-                        <CardTitle className="text-lg">
-                          {metric.departmentName}
-                        </CardTitle>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => {
-                            if (metric.topPerformer) {
-                              refreshEmployeeData().then(() => {
-                                handleEmployeeInspection(metric.topPerformer);
-                              });
-                            }
-                          }}
-                          disabled={isLoadingWorkHistory || !metric.topPerformer}
-                          className="ml-4 bg-green-500"
-                        >
-                          {isLoadingWorkHistory ? "Loading..." : "Inspect Skills"}
-                        </Button>
-                      </div>
-                      <CardDescription>
-                        Employee Count: {metric.employeeCount}
-                      </CardDescription>
-                    </CardHeader>
+            <CardContent className="pt-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {departmentMetrics.map((metric, idx) => {
+                  const percent = employees.length > 0 
+                    ? Math.round((metric.employeeCount / employees.length) * 100) 
+                    : 0;
 
-                    <CardContent>
-                      {metric.topPerformer ? (
-                        <div className="space-y-2">
-                          <div className="flex items-center gap-2">
-                            <Award className="h-5 w-5 text-yellow-600 dark:text-yellow-400" />
-                            <span className="font-semibold">Top Performer</span>
+                  const borderColors = [
+                    "border-l-blue-500",
+                    "border-l-indigo-500",
+                    "border-l-emerald-500",
+                    "border-l-purple-500",
+                    "border-l-orange-500",
+                    "border-l-pink-500"
+                  ];
+
+                  return (
+                    <Card
+                      key={metric.departmentId}
+                      className={`border border-gray-200/80 dark:border-gray-800 bg-white/95 dark:bg-gray-950/95 shadow-sm hover:shadow-xl hover:scale-[1.01] hover:-translate-y-0.5 transition-all duration-300 flex flex-col justify-between border-l-4 ${borderColors[idx % borderColors.length]} rounded-2xl`}
+                    >
+                      <CardHeader className="pb-3">
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <CardTitle className="text-base font-bold text-gray-900 dark:text-white">
+                              {metric.departmentName}
+                            </CardTitle>
+                            <span className="text-[10px] text-gray-400 font-semibold tracking-wider uppercase">
+                              FACILITY LINE
+                            </span>
                           </div>
-                          <div className="flex items-start gap-4">
-                            <div className="w-12 h-12 bg-gray-200 dark:bg-gray-700 rounded-xl flex items-center justify-center">
-                              <User className="h-6 w-6 text-white" />
-                            </div>
-                            <div>
-                              <h4 className="font-semibold text-gray-900 dark:text-white">
-                                {metric.topPerformer.name}
-                              </h4>
-                              <p className="text-sm text-muted-foreground">
-                                ID: {metric.topPerformer.displayId} • Skills:{" "}
-                                {Object.keys(metric.topPerformer.skills || {}).length}
-                              </p>
-                            </div>
+                          <Badge className="bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-950/30 dark:text-blue-400 dark:border-blue-900/50 text-xs px-2.5 py-0.5 rounded-full font-bold">
+                            {metric.employeeCount} {metric.employeeCount === 1 ? 'Operator' : 'Operators'}
+                          </Badge>
+                        </div>
+                        
+                        {/* Progress visual of department workforce share */}
+                        <div className="mt-3.5 space-y-1">
+                          <div className="flex justify-between text-[10px] text-muted-foreground font-medium">
+                            <span>Workforce Share</span>
+                            <span>{percent}%</span>
+                          </div>
+                          <div className="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-1.5 overflow-hidden">
+                            <div className="bg-gradient-to-r from-blue-500 to-indigo-600 h-full rounded-full" style={{ width: `${percent}%` }} />
                           </div>
                         </div>
-                      ) : (
-                        <p className="text-sm text-muted-foreground">
-                          No employees in this department
-                        </p>
-                      )}
-                    </CardContent>
-                  </Card>
-                ))}
+                      </CardHeader>
+
+                      <CardContent className="pt-3 border-t border-gray-100 dark:border-gray-800/80 flex-1 flex flex-col justify-between">
+                        {metric.topPerformer ? (
+                          <div className="space-y-4">
+                            <div className="flex items-center gap-1.5">
+                              <Trophy className="h-4 w-4 text-amber-500 fill-amber-500/20" />
+                              <span className="text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Top Performer</span>
+                            </div>
+                            
+                            <div className="flex items-center justify-between gap-3 p-3 rounded-xl bg-amber-50/30 dark:bg-amber-950/10 border border-amber-100/50 dark:border-amber-900/20 shadow-sm">
+                              <div className="flex items-center gap-3">
+                                <div className="w-9 h-9 bg-gradient-to-tr from-amber-500 to-orange-500 rounded-full flex items-center justify-center shadow text-white font-bold text-xs uppercase flex-shrink-0">
+                                  {metric.topPerformer.name.split(" ").map((n: string) => n[0]).slice(0, 2).join("")}
+                                </div>
+                                <div className="min-w-0">
+                                  <h4 className="font-bold text-xs text-gray-900 dark:text-white truncate">
+                                    {metric.topPerformer.name}
+                                  </h4>
+                                  <p className="text-[10px] text-muted-foreground mt-0.5">
+                                    ID: {metric.topPerformer.displayId || metric.topPerformer.employeeId} • {metric.topPerformer.totalSkills || 0} Skills
+                                  </p>
+                                </div>
+                              </div>
+
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => {
+                                  if (metric.topPerformer) {
+                                    refreshEmployeeData().then(() => {
+                                      handleEmployeeInspection(metric.topPerformer);
+                                    });
+                                  }
+                                }}
+                                disabled={isLoadingWorkHistory}
+                                className="h-8 text-xs font-semibold px-2.5 py-1 border border-blue-200 text-blue-600 hover:bg-blue-50 dark:border-blue-900/50 dark:text-blue-400 dark:hover:bg-blue-950/20 shadow-sm transition-all flex-shrink-0"
+                              >
+                                {isLoadingWorkHistory ? "Loading..." : "Inspect"}
+                              </Button>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="h-24 flex flex-col items-center justify-center text-center p-3 border border-dashed border-gray-200 dark:border-gray-800 rounded-xl bg-gray-50/50 dark:bg-gray-900/50">
+                            <Briefcase className="h-5 w-5 text-gray-400 mb-1.5" />
+                            <p className="text-xs text-gray-500 font-medium">
+                              No active employees assigned
+                            </p>
+                          </div>
+                        )}
+                      </CardContent>
+                    </Card>
+                  );
+                })}
               </div>
             </CardContent>
           </Card>
@@ -906,19 +980,110 @@ export default function EmployeesPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2, duration: 0.5 }}
           >
-            <Card className="shadow-lg border-0 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm">
-              <CardContent>
+            <Card className="shadow-lg border-0 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm overflow-hidden">
+              <CardHeader className="border-b border-gray-100 dark:border-gray-700/50 pb-4">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                  <div>
+                    <CardTitle className="text-lg font-bold text-gray-900 dark:text-white">
+                      Active Workforce Registry
+                    </CardTitle>
+                    <CardDescription className="text-xs">
+                      Filtered results showing active line operators and their certifications.
+                    </CardDescription>
+                  </div>
+                  <Badge variant="secondary" className="w-fit font-bold text-xs bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-200">
+                    {filteredEmployees.length} Operators Total
+                  </Badge>
+                </div>
+              </CardHeader>
+              <CardContent className="pt-6 space-y-6">
                 <Table
                   columns={columns}
-                  data={filteredEmployees}
+                  data={paginatedEmployees}
                   isLoading={isLoading}
                   emptyMessage="No employees found"
+                  startIndex={(currentPage - 1) * itemsPerPage}
                   onInspect={(employee) => {
                     refreshEmployeeData().then(() => {
                       handleEmployeeInspection(employee);
                     });
                   }}
                 />
+
+                {/* Pagination Controls */}
+                {totalPages > 1 && (
+                  <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 border-t border-gray-100 dark:border-gray-800/80">
+                    <span className="text-xs text-muted-foreground font-medium">
+                      Showing <span className="font-semibold text-foreground">{(currentPage - 1) * itemsPerPage + 1}</span> to{" "}
+                      <span className="font-semibold text-foreground">
+                        {Math.min(currentPage * itemsPerPage, filteredEmployees.length)}
+                      </span>{" "}
+                      of <span className="font-semibold text-foreground">{filteredEmployees.length}</span> operators
+                    </span>
+
+                    <div className="flex items-center gap-1.5">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                        disabled={currentPage === 1}
+                        className="h-8 w-8 p-0 border border-gray-200 dark:border-gray-800 hover:bg-slate-50 dark:hover:bg-slate-900"
+                      >
+                        <ChevronLeft className="h-4 w-4" />
+                      </Button>
+
+                      {/* Dynamic page numbers */}
+                      {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNum) => {
+                        // Show first, last, current, and adjacent pages
+                        if (
+                          pageNum === 1 ||
+                          pageNum === totalPages ||
+                          Math.abs(pageNum - currentPage) <= 1
+                        ) {
+                          return (
+                            <Button
+                              key={pageNum}
+                              variant={currentPage === pageNum ? "default" : "outline"}
+                              size="sm"
+                              onClick={() => setCurrentPage(pageNum)}
+                              className={`h-8 w-8 p-0 text-xs font-semibold ${
+                                currentPage === pageNum
+                                  ? "bg-blue-600 hover:bg-blue-700 text-white shadow-sm border-0"
+                                  : "border border-gray-200 dark:border-gray-800 hover:bg-slate-50 dark:hover:bg-slate-900"
+                              }`}
+                            >
+                              {pageNum}
+                            </Button>
+                          );
+                        }
+                        
+                        // Render ellipsis for skipped ranges
+                        if (
+                          pageNum === 2 ||
+                          pageNum === totalPages - 1
+                        ) {
+                          return (
+                            <span key={`ellipsis-${pageNum}`} className="text-xs text-muted-foreground px-1.5 font-medium select-none">
+                              ...
+                            </span>
+                          );
+                        }
+
+                        return null;
+                      })}
+
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+                        disabled={currentPage === totalPages}
+                        className="h-8 w-8 p-0 border border-gray-200 dark:border-gray-800 hover:bg-slate-50 dark:hover:bg-slate-900"
+                      >
+                        <ChevronRight className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </motion.div>

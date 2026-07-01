@@ -71,7 +71,7 @@ export default function LoginPage() {
         if (normalizedRole === 'admin') {
           router.push('/admin')
         } else if (normalizedRole === 'manager') {
-          router.push('/manager-dashboard')
+          router.push('/landing')
         } else {
           router.push('/employee-dashboard')
         }

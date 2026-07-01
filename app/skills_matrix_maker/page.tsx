@@ -93,28 +93,59 @@ const generateSkillLevels = (employee: any, skills: string[]) => {
   return levels;
 };
 
-const PieChartSkillIndicator = ({ level, size = 80 }: { level: string; size?: number }) => {
-  const colors = skillLevelColors[level as keyof typeof skillLevelColors] || {
-    bg: "#e5e7eb",
-    text: "#6b7280",
-    number: 0,
-  };
-
-  return (
-    <div className="flex items-center justify-center">
-      <div
-        className="rounded-full flex items-center justify-center font-bold text-white transition-transform hover:scale-110"
-        style={{
-          width: size * 0.4,
-          height: size * 0.4,
-          backgroundColor: colors.bg,
-          fontSize: `${size * 0.2}px`,
-        }}
-      >
-        {colors.number}
-      </div>
-    </div>
-  );
+const PieChartSkillIndicator = ({ level, size = 20 }: { level: string; size?: number }) => {
+  const cleanLevel = (level || "None").trim().toUpperCase();
+  
+  const strokeWidth = 2;
+  const radius = (size - strokeWidth) / 2;
+  const center = size / 2;
+  
+  switch (cleanLevel) {
+    case "EXPERT":
+      return (
+        <div className="flex items-center justify-center" title="Expert (Level 4)">
+          <svg width={size} height={size} className="text-emerald-500 fill-emerald-500 transition-transform hover:scale-110 duration-200 cursor-pointer">
+            <circle cx={center} cy={center} r={radius} stroke="currentColor" strokeWidth={strokeWidth} />
+            <path d={`M ${center - size*0.18} ${center} L ${center - size*0.05} ${center + size*0.12} L ${center + size*0.22} ${center - size*0.15}`} fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </div>
+      );
+    case "HIGH":
+      return (
+        <div className="flex items-center justify-center" title="High (Level 3)">
+          <svg width={size} height={size} className="text-blue-500 fill-blue-500 transition-transform hover:scale-110 duration-200 cursor-pointer">
+            <circle cx={center} cy={center} r={radius} stroke="currentColor" strokeWidth={strokeWidth} fill="none" />
+            <path d={`M ${center} ${center} L ${center} ${center - radius} A ${radius} ${radius} 0 1 1 ${center - radius} ${center} Z`} />
+          </svg>
+        </div>
+      );
+    case "MEDIUM":
+      return (
+        <div className="flex items-center justify-center" title="Medium (Level 2)">
+          <svg width={size} height={size} className="text-amber-500 fill-amber-500 transition-transform hover:scale-110 duration-200 cursor-pointer">
+            <circle cx={center} cy={center} r={radius} stroke="currentColor" strokeWidth={strokeWidth} fill="none" />
+            <path d={`M ${center} ${center} L ${center} ${center - radius} A ${radius} ${radius} 0 0 1 ${center} ${center + radius} Z`} />
+          </svg>
+        </div>
+      );
+    case "LOW":
+      return (
+        <div className="flex items-center justify-center" title="Low (Level 1)">
+          <svg width={size} height={size} className="text-red-500 fill-red-500 transition-transform hover:scale-110 duration-200 cursor-pointer">
+            <circle cx={center} cy={center} r={radius} stroke="currentColor" strokeWidth={strokeWidth} fill="none" />
+            <path d={`M ${center} ${center} L ${center} ${center - radius} A ${radius} ${radius} 0 0 1 ${center + radius} ${center} Z`} />
+          </svg>
+        </div>
+      );
+    default:
+      return (
+        <div className="flex items-center justify-center" title="None (Level 0)">
+          <svg width={size} height={size} className="text-gray-300 dark:text-gray-600 transition-transform hover:scale-110 duration-200 cursor-pointer">
+            <circle cx={center} cy={center} r={radius} stroke="currentColor" strokeWidth={strokeWidth} fill="none" />
+          </svg>
+        </div>
+      );
+  }
 };
 
 const SaveSuccessPopup = ({ isVisible, onClose, matrixName }: any) => {
@@ -281,7 +312,9 @@ const SkillsMatrixManager = () => {
   const [skills, setSkills] = useState<string[]>([]);
   const [newSkill, setNewSkill] = useState("");
   const [employeeFilter, setEmployeeFilter] = useState("");
+  const [showAllDepts, setShowAllDepts] = useState(false);
   const [skillFilter, setSkillFilter] = useState("");
+  const [showAllSkills, setShowAllSkills] = useState(false);
   const [skillLevels, setSkillLevels] = useState<{ [key: string]: string }>({});
   const [saved, setSaved] = useState(false);
   const [showFinalTable, setShowFinalTable] = useState(false);
@@ -295,8 +328,8 @@ const SkillsMatrixManager = () => {
   // Database hooks
   const { employees: dbEmployees, loading: employeesLoading, error: employeesError } = useEmployees();
   const { departments: dbDepartments, loading: departmentsLoading, error: departmentsError } = useDepartments();
-  const { matrices, loading: matricesLoading, error: matricesError, saveMatrix } = useSkillMatrices();
-  const { getSkillsByDepartment } = useSkills();
+  const { matrices, loading: matricesLoading, error: matricesError, saveMatrix, updateMatrix } = useSkillMatrices();
+  const { skills: dbSkills, getSkillsByDepartment } = useSkills();
 
   const [departments, setDepartments] = useState<any[]>([]);
   const [allEmployees, setAllEmployees] = useState<any[]>([]);
@@ -334,7 +367,7 @@ const SkillsMatrixManager = () => {
   const getFilteredEmployees = () => {
     if (!selectedDepartment) return [];
     return allEmployees.filter((emp) => {
-      const isMatch = emp.departmentId === selectedDepartment;
+      const isMatch = showAllDepts || emp.departmentId === selectedDepartment;
       return isMatch && emp.name.toLowerCase().includes(employeeFilter.toLowerCase());
     });
   };
@@ -346,7 +379,8 @@ const SkillsMatrixManager = () => {
   );
 
   const departmentSkills = selectedDepartment ? getSkillsByDepartment(selectedDepartment) : [];
-  const availableSkillsAndMachines = departmentSkills.map((skill: any) => ({ name: skill.name, type: "skill" }));
+  const activePredefinedSkills = showAllSkills ? dbSkills : departmentSkills;
+  const availableSkillsAndMachines = activePredefinedSkills.map((skill: any) => ({ name: skill.name, type: "skill" }));
   const filteredSkills = availableSkillsAndMachines.filter(
     (item) => item.name.toLowerCase().includes(skillFilter.toLowerCase()) && !skills.includes(item.name)
   );
@@ -369,7 +403,7 @@ const SkillsMatrixManager = () => {
     }
   }, [selectedEmployees, skills, selectedMatrix]);
 
-  const loadMatrix = (matrix: any) => {
+  const loadMatrix = (matrix: any, shouldPreview = false) => {
     setMatrixName(matrix.name);
     setSelectedDepartment(matrix.departmentId);
     setSelectedEmployees(matrix.matrixData?.employees || []);
@@ -378,8 +412,20 @@ const SkillsMatrixManager = () => {
     setSkills(skillStrings);
     setSkillLevels(matrix.matrixData?.skillLevels || {});
     setSelectedMatrix(matrix);
-    setShowFinalTable(true);
+    if (shouldPreview) {
+      setShowFinalTable(true);
+    }
   };
+
+  // Load matrix from URL parameter
+  useEffect(() => {
+    if (matrixId && matrices && matrices.length > 0) {
+      const found = matrices.find((m: any) => (m.id || m._id)?.toString() === matrixId.toString());
+      if (found) {
+        loadMatrix(found, true);
+      }
+    }
+  }, [matrixId, matrices]);
 
   const canProceedToNext = () => {
     switch (currentStep) {
@@ -415,6 +461,7 @@ const SkillsMatrixManager = () => {
   const getSkillLevel = (employee: any, skill: string) => skillLevels[`${employee.name}-${skill}`] || "None";
 
   // FIXED handleSave function - using valid database ID
+  // FIXED handleSave function - using valid database ID
   const handleSave = async () => {
     const selectedDept = departments.find((d) => d.id === selectedDepartment);
     if (!selectedDept) {
@@ -431,6 +478,16 @@ const SkillsMatrixManager = () => {
     }
     if (skills.length === 0) {
       alert("At least one skill must be added");
+      return;
+    }
+
+    // Check if a matrix with the same name already exists in the database
+    const nameExists = matrices.some((m: any) => 
+      m.name?.trim().toLowerCase() === matrixName.trim().toLowerCase() && 
+      (!selectedMatrix || (m.id || m._id)?.toString() !== (selectedMatrix.id || selectedMatrix._id)?.toString())
+    );
+    if (nameExists) {
+      alert(`A skills matrix with the name "${matrixName}" already exists. Please choose a unique name.`);
       return;
     }
 
@@ -452,13 +509,15 @@ const SkillsMatrixManager = () => {
       },
     };
 
-    const result = await saveMatrix(matrixData);
+    const matrixIdToUpdate = selectedMatrix?.id || selectedMatrix?._id;
+    const result = matrixIdToUpdate
+      ? await updateMatrix(matrixIdToUpdate, matrixData)
+      : await saveMatrix(matrixData);
+
     if (result.success) {
-      setSaved(true);
-      setShowSuccessPopup(true);
-      setTimeout(() => setSaved(false), 2000);
+      router.push("/skills-mapping?success=true");
     } else {
-      alert(`Failed to save: ${result.error}`);
+      alert(`Failed to save: ${(result as any).error || (result as any).message || "Unknown error"}`);
     }
   };
 
@@ -469,88 +528,288 @@ const SkillsMatrixManager = () => {
   }
 
   if (showFinalTable) {
+    // Find department name for display
+    const currentDeptName = departments.find(d => d.id === selectedDepartment)?.name || "Department Line";
+
     return (
-      <div className="min-h-screen bg-white p-6">
-        <Button onClick={() => setShowFinalTable(false)} className="mb-4">← Back to Builder</Button>
-        <Card>
-          <CardHeader>
-            <CardTitle>{matrixName}</CardTitle>
-            <CardDescription>{selectedEmployees.length} employees • {skills.length} skills</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Employee</TableHead>
-                    {skills.map((skill, idx) => (<TableHead key={idx}>{skill}</TableHead>))}
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {selectedEmployees.map((emp, idx) => (
-                    <TableRow key={idx}>
-                      <TableCell className="font-medium">{emp.name}</TableCell>
-                      {skills.map((skill, skillIdx) => (
-                        <TableCell key={skillIdx}>
-                          <PieChartSkillIndicator level={getSkillLevel(emp, skill)} size={40} />
-                        </TableCell>
-                      ))}
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-6">
+        <div className="max-w-7xl mx-auto space-y-6">
+          
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div>
+              <h1 className="text-3xl font-extrabold tracking-tight bg-gradient-to-r from-gray-950 to-gray-700 dark:from-white dark:to-slate-400 bg-clip-text text-transparent">
+                {matrixName}
+              </h1>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                Active Competency Map • {currentDeptName} • {selectedEmployees.length} Operators • {skills.length} Certified Skills
+              </p>
             </div>
-          </CardContent>
-        </Card>
-        <SaveSuccessPopup isVisible={showSuccessPopup} onClose={() => setShowSuccessPopup(false)} matrixName={matrixName} />
+            
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowFinalTable(false)}
+                className="h-9 px-4 border border-gray-200 text-gray-700 hover:bg-slate-50 dark:border-gray-800 dark:text-gray-300 dark:hover:bg-slate-900"
+              >
+                ← Back to Builder
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => window.print()}
+                className="h-9 px-4 border border-gray-200 text-gray-700 hover:bg-slate-50 dark:border-gray-800 dark:text-gray-300 dark:hover:bg-slate-900 hidden sm:inline-flex"
+              >
+                Print Matrix
+              </Button>
+            </div>
+          </div>
+
+          {/* Harvey Ball Legend */}
+          <div className="flex flex-wrap items-center gap-6 p-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-sm">
+            <span className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+              Proficiency Key:
+            </span>
+            <div className="flex items-center gap-2 text-xs font-semibold">
+              <PieChartSkillIndicator level="None" size={18} />
+              <span className="text-gray-600 dark:text-gray-400">0 - None (No Skill)</span>
+            </div>
+            <div className="flex items-center gap-2 text-xs font-semibold">
+              <PieChartSkillIndicator level="Low" size={18} />
+              <span className="text-gray-600 dark:text-gray-400">1 - Low (Supervised Practice)</span>
+            </div>
+            <div className="flex items-center gap-2 text-xs font-semibold">
+              <PieChartSkillIndicator level="Medium" size={18} />
+              <span className="text-gray-600 dark:text-gray-400">2 - Medium (Independent Standard Operations)</span>
+            </div>
+            <div className="flex items-center gap-2 text-xs font-semibold">
+              <PieChartSkillIndicator level="High" size={18} />
+              <span className="text-gray-600 dark:text-gray-400">3 - High (Autonomous Line Handling)</span>
+            </div>
+            <div className="flex items-center gap-2 text-xs font-semibold">
+              <PieChartSkillIndicator level="Expert" size={18} />
+              <span className="text-gray-600 dark:text-gray-400">4 - Expert (Troubleshooting &amp; Coaching)</span>
+            </div>
+          </div>
+
+          {/* Matrix Card */}
+          <Card className="shadow-lg border-0 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm overflow-hidden">
+            <CardContent className="p-0">
+              <div className="overflow-x-auto">
+                <table className="w-full border-collapse">
+                  <thead>
+                    <tr className="bg-slate-50 dark:bg-slate-900 border-b border-gray-200 dark:border-gray-800">
+                      {/* Sticky Top-Left corner */}
+                      <th className="sticky left-0 bg-slate-50 dark:bg-slate-900 z-20 px-6 py-4 text-left text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider border-r border-b border-gray-200 dark:border-gray-800 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">
+                        Operator Name
+                      </th>
+                      {skills.map((skill, idx) => (
+                        <th
+                          key={idx}
+                          className="px-6 py-4 text-center text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider border-b border-r border-gray-200 dark:border-gray-800 min-w-[120px]"
+                        >
+                          {skill}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {selectedEmployees.map((emp, idx) => (
+                      <tr
+                        key={idx}
+                        className="hover:bg-blue-50/40 dark:hover:bg-blue-950/20 transition-colors border-b border-gray-100 dark:border-gray-800"
+                      >
+                        {/* Sticky Left-aligned employee name cell */}
+                        <td className="sticky left-0 bg-white dark:bg-gray-900 z-10 px-6 py-4 text-sm font-semibold text-gray-900 dark:text-white border-r border-gray-200 dark:border-gray-800 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)] truncate max-w-[200px]">
+                          {emp.name}
+                        </td>
+                        {skills.map((skill, skillIdx) => (
+                          <td
+                            key={skillIdx}
+                            className="px-6 py-4 text-center border-r border-gray-100 dark:border-gray-800/60"
+                          >
+                            <div className="flex justify-center">
+                              <PieChartSkillIndicator level={getSkillLevel(emp, skill)} size={20} />
+                            </div>
+                          </td>
+                        ))}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </CardContent>
+          </Card>
+          <SaveSuccessPopup isVisible={showSuccessPopup} onClose={() => setShowSuccessPopup(false)} matrixName={matrixName} />
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-orange-50 via-blue-50 to-purple-50 p-8">
-      <div className="max-w-6xl mx-auto">
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-orange-500 to-blue-500 bg-clip-text text-transparent">Skills Matrix Builder</h1>
-          <p className="text-gray-600 mt-2">Create and manage employee skill matrices</p>
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-6">
+      <div className="max-w-6xl mx-auto space-y-8">
+        
+        {/* Page Header */}
+        <div className="text-center md:text-left">
+          <h1 className="text-3xl font-extrabold tracking-tight bg-gradient-to-r from-gray-950 to-gray-700 dark:from-white dark:to-slate-400 bg-clip-text text-transparent">
+            Skills Matrix Builder
+          </h1>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+            Establish a competency mapping layout for line operators in 4 quick steps.
+          </p>
         </div>
 
         {/* Step indicators */}
-        <div className="flex justify-between mb-8">
+        <div className="flex justify-between items-start gap-4 p-4 bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm">
           {steps.map((step, idx) => (
-            <div key={step.id} className="flex items-center flex-1">
-              <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold ${currentStep >= step.id ? "bg-blue-600 text-white" : "bg-gray-300 text-gray-600"}`}>
-                {step.id}
+            <div key={step.id} className="flex flex-col items-center flex-1 relative">
+              <div className="flex items-center w-full">
+                <div className={`w-9 h-9 rounded-full flex items-center justify-center font-bold text-xs shadow-md transition-all duration-300 ${
+                  currentStep === step.id
+                    ? "bg-blue-600 text-white ring-4 ring-blue-100 dark:ring-blue-900/40"
+                    : currentStep > step.id
+                    ? "bg-emerald-500 text-white"
+                    : "bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400"
+                }`}>
+                  {currentStep > step.id ? "✓" : step.id}
+                </div>
+                {idx < steps.length - 1 && (
+                  <div className={`flex-1 h-0.5 mx-2 transition-all duration-300 ${
+                    currentStep > step.id ? "bg-emerald-500" : "bg-slate-200 dark:bg-slate-700"
+                  }`} />
+                )}
               </div>
-              {idx < steps.length - 1 && <div className={`flex-1 h-1 mx-2 ${currentStep > step.id ? "bg-blue-600" : "bg-gray-300"}`} />}
+              <div className="mt-2 text-center hidden md:block">
+                <p className={`text-sm font-bold tracking-tight ${currentStep === step.id ? "text-blue-600 dark:text-blue-400" : "text-muted-foreground"}`}>
+                  {step.title}
+                </p>
+                <p className="text-xs text-gray-400 dark:text-gray-500 font-medium">
+                  {step.desc}
+                </p>
+              </div>
             </div>
           ))}
         </div>
 
-        <Card>
+        <Card className="shadow-lg border-0 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm">
           <CardContent className="p-6">
             {/* Step 1: Matrix Setup */}
             {currentStep === 1 && (
               <div className="space-y-6">
-                <div>
-                  <label className="block text-sm font-medium mb-2">Matrix Name</label>
-                  <Input value={matrixName} onChange={(e) => setMatrixName(e.target.value)} placeholder="Enter matrix name" />
+                <div className="p-4 bg-blue-50/50 dark:bg-blue-950/20 border border-blue-100 dark:border-blue-900/30 rounded-xl">
+                  <h3 className="font-bold text-sm text-blue-900 dark:text-blue-300 flex items-center gap-2">
+                    <FileText className="h-5 w-5 text-blue-600" />
+                    Configure Matrix Meta
+                  </h3>
+                  <p className="text-sm text-blue-700 dark:text-blue-400 mt-1">
+                    Provide a matrix title and select the corresponding plant department line.
+                  </p>
                 </div>
-                <div>
-                  <div className="flex justify-between items-center mb-2">
-                    <label className="block text-sm font-medium">Department</label>
-                    <Button variant="outline" size="sm" onClick={() => setShowCreateDepartment(true)}><Plus className="h-4 w-4 mr-1" /> New Department</Button>
+
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center pb-1">
+                    <label className="text-sm font-bold text-gray-500 uppercase tracking-wider">Matrix Builder Mode</label>
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSelectedMatrix(null);
+                          setMatrixName("");
+                          setSelectedDepartment("");
+                          setSelectedEmployees([]);
+                          setSkills([]);
+                          setSkillLevels({});
+                        }}
+                        className={`text-xs px-3 py-1.5 rounded-lg font-bold border transition-colors ${
+                          !selectedMatrix
+                            ? "bg-blue-600 border-blue-600 text-white"
+                            : "bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-800 text-gray-600 dark:text-gray-400 hover:bg-slate-50"
+                        }`}
+                      >
+                        Create New
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (matrices && matrices.length > 0) {
+                            loadMatrix(matrices[0], false);
+                          } else {
+                            alert("No existing matrices found to edit.");
+                          }
+                        }}
+                        className={`text-xs px-3 py-1.5 rounded-lg font-bold border transition-colors ${
+                          selectedMatrix
+                            ? "bg-blue-600 border-blue-600 text-white"
+                            : "bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-800 text-gray-650 dark:text-gray-400 hover:bg-slate-50"
+                        }`}
+                      >
+                        Edit Existing
+                      </button>
+                    </div>
                   </div>
-                  <Select value={selectedDepartment} onValueChange={setSelectedDepartment}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select department" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {departments.map((dept) => (
-                        <SelectItem key={dept.id} value={dept.id}>{dept.name} ({dept.area})</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+
+                  {/* Load Existing dropdown if in edit mode */}
+                  {selectedMatrix && (
+                    <div className="space-y-2">
+                      <label className="text-sm font-bold text-gray-500 uppercase tracking-wider block">Load Saved Matrix</label>
+                      <Select
+                        value={((selectedMatrix as any).id || (selectedMatrix as any)._id)?.toString()}
+                        onValueChange={(val) => {
+                          const found = matrices.find(m => (m.id || (m as any)._id)?.toString() === val.toString());
+                          if (found) {
+                            loadMatrix(found, false);
+                          }
+                        }}
+                      >
+                        <SelectTrigger className="h-11 text-sm border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
+                          <SelectValue placeholder="Choose saved matrix" />
+                        </SelectTrigger>
+                        <SelectContent className="border border-gray-200 dark:border-gray-700 shadow-xl max-h-56 overflow-y-auto">
+                          {matrices.map((m: any) => (
+                            <SelectItem key={m.id || m._id} value={(m.id || m._id)?.toString()} className="text-sm">
+                              {m.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-bold text-gray-500 uppercase tracking-wider">Matrix Name</label>
+                    <Input
+                      value={matrixName}
+                      onChange={(e) => setMatrixName(e.target.value)}
+                      placeholder={selectedMatrix ? "Edit matrix name" : "e.g., Welding Line A - Q3 Skill Mapping"}
+                      className="h-11 text-sm border border-gray-200 dark:border-gray-700 focus:border-blue-500 bg-white dark:bg-gray-900"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-center">
+                      <label className="text-sm font-bold text-gray-500 uppercase tracking-wider">Department Line</label>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setShowCreateDepartment(true)}
+                        className="text-sm text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/30 font-semibold"
+                      >
+                        <Plus className="h-3.5 w-3.5 mr-1" /> New Department
+                      </Button>
+                    </div>
+                    <Select value={selectedDepartment} onValueChange={setSelectedDepartment}>
+                      <SelectTrigger className="h-11 text-sm border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
+                        <SelectValue placeholder="Choose department line" />
+                      </SelectTrigger>
+                      <SelectContent className="border border-gray-200 dark:border-gray-700 shadow-xl">
+                        {departments.map((dept) => (
+                          <SelectItem key={dept.id} value={dept.id} className="text-sm">
+                            {dept.name} ({dept.area})
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
               </div>
             )}
@@ -558,101 +817,229 @@ const SkillsMatrixManager = () => {
             {/* Step 2: Select Employees */}
             {currentStep === 2 && (
               <div className="space-y-6">
-                <div className="bg-orange-50 p-4 rounded-lg">
-                  <h3 className="font-semibold flex items-center gap-2"><User className="h-5 w-5" /> Table Rows: Employees</h3>
-                  <p className="text-sm text-orange-800">Each employee you select will become a row in your matrix.</p>
+                <div className="p-4 bg-orange-50/50 dark:bg-orange-950/20 border border-orange-100 dark:border-orange-900/30 rounded-xl">
+                  <h3 className="font-bold text-sm text-orange-900 dark:text-orange-300 flex items-center gap-2">
+                    <Users className="h-5 w-5 text-orange-600" />
+                    Table Rows: Operators
+                  </h3>
+                  <p className="text-sm text-orange-700 dark:text-orange-400 mt-1">
+                    Select the technicians and line operators to assign as rows in the matrix.
+                  </p>
                 </div>
 
-                {filteredEmployees.length === 0 && selectedDepartment ? (
-                  <NoEmployeesState departmentName={departments.find(d => d.id === selectedDepartment)?.name || "selected"} onAddEmployee={handleAddEmployee} />
-                ) : (
-                  <div className="grid grid-cols-2 gap-6">
-                    <div>
-                      <div className="flex justify-between items-center mb-4">
-                        <h3 className="font-semibold">Available Employees</h3>
-                        <Badge>{availableEmployees.length}</Badge>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  {/* Left Pane: Available */}
+                  <div className="space-y-4">
+                    <div className="flex justify-between items-center pb-2 border-b border-gray-100 dark:border-gray-800">
+                      <div className="flex items-center gap-2">
+                        <h4 className="font-bold text-sm uppercase tracking-wider text-gray-500">Available Operators</h4>
+                        <Badge className="bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-200 font-bold">{availableEmployees.length}</Badge>
                       </div>
-                      <div className="relative mb-4">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={handleAddEmployee}
+                        className="text-sm text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/30 font-semibold p-1.5 h-auto"
+                      >
+                        <Plus className="h-3.5 w-3.5 mr-1" /> Add Operator
+                      </Button>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <div className="relative">
                         <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                        <Input value={employeeFilter} onChange={(e) => setEmployeeFilter(e.target.value)} placeholder="Search employees..." className="pl-10" />
+                        <Input
+                          value={employeeFilter}
+                          onChange={(e) => setEmployeeFilter(e.target.value)}
+                          placeholder="Filter operators by name..."
+                          className="pl-9 h-10 border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900"
+                        />
                       </div>
-                      <div className="space-y-2 max-h-96 overflow-y-auto">
-                        {availableEmployees.map((emp) => (
-                          <div key={emp.id} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-                            <div>
-                              <p className="font-medium">{emp.name}</p>
-                              <p className="text-xs text-gray-500">{emp.department} • {emp.experience}</p>
-                            </div>
-                            <Button size="sm" onClick={() => addEmployee(emp)} className="bg-green-600"><Plus className="h-4 w-4" /></Button>
-                          </div>
-                        ))}
+                      
+                      <div className="flex items-center gap-2 px-1 py-1">
+                        <input
+                          type="checkbox"
+                          id="showAllDepts"
+                          checked={showAllDepts}
+                          onChange={(e) => setShowAllDepts(e.target.checked)}
+                          className="h-4 w-4 rounded border-gray-300 text-blue-650 focus:ring-blue-500 cursor-pointer"
+                        />
+                        <label htmlFor="showAllDepts" className="text-sm font-semibold text-gray-600 dark:text-gray-400 cursor-pointer select-none">
+                          Show operators from all departments
+                        </label>
                       </div>
                     </div>
-
-                    <div>
-                      <div className="flex justify-between items-center mb-4">
-                        <h3 className="font-semibold">Selected Employees</h3>
-                        <Badge>{selectedEmployees.length}</Badge>
-                      </div>
-                      <div className="space-y-2 max-h-96 overflow-y-auto">
-                        {selectedEmployees.map((emp) => (
-                          <div key={emp.id} className="flex justify-between items-center p-3 bg-orange-50 rounded-lg border border-orange-200">
-                            <div>
-                              <p className="font-medium">{emp.name}</p>
-                              <p className="text-xs text-gray-500">{emp.department} • {emp.experience}</p>
-                            </div>
-                            <Button size="sm" variant="destructive" onClick={() => removeEmployee(emp.id)}><X className="h-4 w-4" /></Button>
+                    
+                    <div className="space-y-2 max-h-80 overflow-y-auto pr-1">
+                      {availableEmployees.map((emp) => (
+                        <div key={emp.id} className="flex justify-between items-center p-3 bg-slate-50 dark:bg-slate-900/40 border border-gray-100 dark:border-gray-800/60 rounded-xl hover:border-gray-300 transition-all">
+                          <div>
+                            <p className="font-bold text-sm text-gray-800 dark:text-gray-200">{emp.name}</p>
+                            <p className="text-[10px] text-gray-500 mt-0.5">{emp.department} • {emp.experience}</p>
                           </div>
-                        ))}
-                        {selectedEmployees.length === 0 && <p className="text-center text-gray-500 py-8">No employees selected yet</p>}
-                      </div>
+                          <Button
+                            size="sm"
+                            onClick={() => addEmployee(emp)}
+                            className="h-8 w-8 p-0 bg-blue-600 hover:bg-blue-700 text-white rounded-lg border-0 flex items-center justify-center shadow-sm"
+                          >
+                            <Plus className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      ))}
+                      {availableEmployees.length === 0 && (
+                        <div className="text-center py-12 border border-dashed border-gray-200 dark:border-gray-800 rounded-xl bg-gray-50/50 dark:bg-gray-900/50 space-y-3">
+                          <p className="text-xs text-gray-500 font-medium">No operators found matching criteria</p>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={handleAddEmployee}
+                            className="text-xs font-semibold"
+                          >
+                            <Plus className="h-3.5 w-3.5 mr-1" /> Create Operator
+                          </Button>
+                        </div>
+                      )}
                     </div>
                   </div>
-                )}
+
+                  {/* Right Pane: Selected */}
+                  <div className="space-y-4">
+                    <div className="flex justify-between items-center pb-2 border-b border-gray-100 dark:border-gray-800">
+                      <h4 className="font-bold text-sm uppercase tracking-wider text-gray-500">Selected Rows</h4>
+                      <Badge className="bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 font-bold">{selectedEmployees.length}</Badge>
+                    </div>
+                    <div className="space-y-2 max-h-96 overflow-y-auto pr-1">
+                      {selectedEmployees.map((emp) => (
+                        <div key={emp.id} className="flex justify-between items-center p-3 bg-blue-50/30 dark:bg-blue-950/20 border border-blue-100 dark:border-blue-900/40 rounded-xl">
+                          <div>
+                            <p className="font-bold text-sm text-gray-900 dark:text-white">{emp.name}</p>
+                            <p className="text-[10px] text-gray-500 mt-0.5">{emp.department} • {emp.experience}</p>
+                          </div>
+                          <Button
+                            size="sm"
+                            variant="destructive"
+                            onClick={() => removeEmployee(emp.id)}
+                            className="h-8 w-8 p-0 hover:bg-red-700 rounded-lg flex items-center justify-center border-0 shadow-sm"
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      ))}
+                      {selectedEmployees.length === 0 && (
+                        <div className="text-center py-12 border border-dashed border-gray-200 dark:border-gray-800 rounded-xl bg-gray-50/50 dark:bg-gray-900/50">
+                          <p className="text-xs text-gray-500 font-medium">No operators assigned to rows yet</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
               </div>
             )}
 
             {/* Step 3: Add Skills */}
             {currentStep === 3 && (
               <div className="space-y-6">
-                <div className="bg-blue-50 p-4 rounded-lg">
-                  <h3 className="font-semibold flex items-center gap-2"><Cog className="h-5 w-5" /> Table Columns: Skills</h3>
-                  <p className="text-sm text-blue-800">Each skill will become a column in your matrix.</p>
+                <div className="p-4 bg-emerald-50/50 dark:bg-emerald-950/20 border border-emerald-100 dark:border-emerald-900/30 rounded-xl">
+                  <h3 className="font-bold text-sm text-emerald-900 dark:text-emerald-300 flex items-center gap-2">
+                    <Cog className="h-5 w-5 text-emerald-600" />
+                    Table Columns: Skills
+                  </h3>
+                  <p className="text-sm text-emerald-700 dark:text-emerald-400 mt-1">
+                    Select predefined line skills or define custom metrics to map as column headers.
+                  </p>
                 </div>
 
-                <div className="grid grid-cols-2 gap-6">
-                  <div>
-                    <h3 className="font-semibold mb-4">Available Skills</h3>
-                    <div className="relative mb-4">
-                      <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                      <Input value={skillFilter} onChange={(e) => setSkillFilter(e.target.value)} placeholder="Search skills..." className="pl-10" />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  {/* Left Pane: Available */}
+                  <div className="space-y-4">
+                    <div className="flex justify-between items-center pb-2 border-b border-gray-100 dark:border-gray-800">
+                      <h4 className="font-bold text-sm uppercase tracking-wider text-gray-500">Available Skills</h4>
+                      <Badge className="bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-200 font-bold">{filteredSkills.length}</Badge>
                     </div>
-                    <div className="space-y-2 max-h-96 overflow-y-auto">
+                    <div className="space-y-2">
+                      <div className="relative">
+                        <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                        <Input
+                          value={skillFilter}
+                          onChange={(e) => setSkillFilter(e.target.value)}
+                          placeholder="Search predefined skills..."
+                          className="pl-9 h-10 border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900"
+                        />
+                      </div>
+                      
+                      <div className="flex items-center gap-2 px-1 py-1">
+                        <input
+                          type="checkbox"
+                          id="showAllSkills"
+                          checked={showAllSkills}
+                          onChange={(e) => setShowAllSkills(e.target.checked)}
+                          className="h-4 w-4 rounded border-gray-300 text-blue-650 focus:ring-blue-500 cursor-pointer"
+                        />
+                        <label htmlFor="showAllSkills" className="text-sm font-semibold text-gray-600 dark:text-gray-400 cursor-pointer select-none">
+                          Show skills from all departments
+                        </label>
+                      </div>
+                    </div>
+                    <div className="space-y-2 max-h-64 overflow-y-auto pr-1">
                       {filteredSkills.map((skill, idx) => (
-                        <div key={idx} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-                          <span>{skill.name}</span>
-                          <Button size="sm" onClick={() => addPredefinedSkill(skill)} className="bg-green-600"><Plus className="h-4 w-4" /></Button>
+                        <div key={idx} className="flex justify-between items-center p-3 bg-slate-50 dark:bg-slate-900/40 border border-gray-100 dark:border-gray-800/60 rounded-xl hover:border-gray-300 transition-all">
+                          <span className="font-bold text-sm text-gray-800 dark:text-gray-200">{skill.name}</span>
+                          <Button
+                            size="sm"
+                            onClick={() => addPredefinedSkill(skill)}
+                            className="h-8 w-8 p-0 bg-blue-600 hover:bg-blue-700 text-white rounded-lg border-0 flex items-center justify-center shadow-sm"
+                          >
+                            <Plus className="h-4 w-4" />
+                          </Button>
                         </div>
                       ))}
                     </div>
-                    <div className="mt-4">
+                    
+                    <div className="pt-2">
+                      <label className="text-sm font-bold text-gray-500 uppercase tracking-wider block mb-2">Create Custom Skill</label>
                       <div className="flex gap-2">
-                        <Input value={newSkill} onChange={(e) => setNewSkill(e.target.value)} placeholder="Custom skill name" onKeyPress={(e) => e.key === "Enter" && addSkill()} />
-                        <Button onClick={addSkill} className="bg-gradient-to-r from-orange-500 to-blue-500"><Plus className="h-4 w-4" /></Button>
+                        <Input
+                          value={newSkill}
+                          onChange={(e) => setNewSkill(e.target.value)}
+                          placeholder="e.g., Robot Programming"
+                          onKeyPress={(e) => e.key === "Enter" && addSkill()}
+                          className="h-10 text-sm border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900"
+                        />
+                        <Button
+                          onClick={addSkill}
+                          className="h-10 px-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold flex items-center justify-center border-0 shadow-md"
+                        >
+                          <Plus className="h-4 w-4" />
+                        </Button>
                       </div>
                     </div>
                   </div>
 
-                  <div>
-                    <h3 className="font-semibold mb-4">Selected Skills</h3>
-                    <div className="space-y-2 max-h-96 overflow-y-auto">
+                  {/* Right Pane: Selected */}
+                  <div className="space-y-4">
+                    <div className="flex justify-between items-center pb-2 border-b border-gray-100 dark:border-gray-800">
+                      <h4 className="font-bold text-sm uppercase tracking-wider text-gray-500">Selected Columns</h4>
+                      <Badge className="bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200 font-bold">{skills.length}</Badge>
+                    </div>
+                    <div className="space-y-2 max-h-96 overflow-y-auto pr-1">
                       {skills.map((skill, idx) => (
-                        <div key={idx} className="flex justify-between items-center p-3 bg-blue-50 rounded-lg">
-                          <span>{skill}</span>
-                          <Button size="sm" variant="destructive" onClick={() => removeSkill(skill)}><X className="h-4 w-4" /></Button>
+                        <div key={idx} className="flex justify-between items-center p-3 bg-emerald-50/30 dark:bg-emerald-950/20 border border-emerald-100 dark:border-emerald-900/40 rounded-xl">
+                          <span className="font-bold text-sm text-gray-900 dark:text-white">{skill}</span>
+                          <Button
+                            size="sm"
+                            variant="destructive"
+                            onClick={() => removeSkill(skill)}
+                            className="h-8 w-8 p-0 hover:bg-red-700 rounded-lg flex items-center justify-center border-0 shadow-sm"
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
                         </div>
                       ))}
-                      {skills.length === 0 && <p className="text-center text-gray-500 py-8">No skills selected yet</p>}
+                      {skills.length === 0 && (
+                        <div className="text-center py-12 border border-dashed border-gray-200 dark:border-gray-800 rounded-xl bg-gray-50/50 dark:bg-gray-900/50">
+                          <p className="text-xs text-gray-500 font-medium">No skills mapped to columns yet</p>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -662,51 +1049,76 @@ const SkillsMatrixManager = () => {
             {/* Step 4: Preview & Save */}
             {currentStep === 4 && (
               <div className="space-y-6">
-                <div className="bg-purple-50 p-4 rounded-lg">
-                  <h3 className="font-semibold flex items-center gap-2"><FileText className="h-5 w-5" /> Matrix Summary</h3>
-                  <p className="text-sm text-purple-800">Review your matrix before saving.</p>
+                <div className="p-4 bg-purple-50/50 dark:bg-purple-950/20 border border-purple-100 dark:border-purple-900/30 rounded-xl">
+                  <h3 className="font-bold text-sm text-purple-900 dark:text-purple-300 flex items-center gap-2">
+                    <FileText className="h-5 w-5 text-purple-600" />
+                    Matrix Summary
+                  </h3>
+                  <p className="text-sm text-purple-700 dark:text-purple-400 mt-1">
+                    Verify department details, columns, rows, and final competency layout before saving.
+                  </p>
                 </div>
 
-                <div className="grid grid-cols-3 gap-4">
-                  <div className="border rounded-lg p-4">
-                    <h4 className="font-semibold">Matrix Details</h4>
-                    <p className="text-sm text-gray-600">Name: {matrixName}</p>
-                    <p className="text-sm text-gray-600">Department: {departments.find(d => d.id === selectedDepartment)?.name}</p>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div className="p-4 bg-slate-50 dark:bg-slate-900/60 border border-gray-100 dark:border-gray-800 rounded-xl space-y-3">
+                    <h4 className="font-bold text-sm uppercase tracking-wider text-gray-500">Metadata</h4>
+                    <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">Name: <span className="font-medium text-gray-600 dark:text-gray-400">{matrixName}</span></p>
+                    <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">Department: <span className="font-medium text-gray-600 dark:text-gray-400">{departments.find(d => d.id === selectedDepartment)?.name}</span></p>
                   </div>
-                  <div className="border rounded-lg p-4">
-                    <h4 className="font-semibold">Employees ({selectedEmployees.length})</h4>
-                    <div className="max-h-32 overflow-y-auto">
-                      {selectedEmployees.map((emp, idx) => <p key={idx} className="text-sm text-gray-600">• {emp.name}</p>)}
+                  <div className="border border-gray-200 dark:border-gray-700 bg-slate-50/50 dark:bg-slate-900/40 rounded-xl p-4 space-y-2">
+                    <h4 className="font-bold text-sm uppercase tracking-wider text-gray-500">Operators ({selectedEmployees.length})</h4>
+                    <div className="space-y-1.5 max-h-40 overflow-y-auto">
+                      {selectedEmployees.map((emp, idx) => (
+                        <p key={idx} className="text-sm font-semibold text-gray-700 dark:text-gray-300">• {emp.name}</p>
+                      ))}
                     </div>
                   </div>
-                  <div className="border rounded-lg p-4">
-                    <h4 className="font-semibold">Skills ({skills.length})</h4>
-                    <div className="max-h-32 overflow-y-auto">
-                      {skills.map((skill, idx) => <p key={idx} className="text-sm text-gray-600">• {skill}</p>)}
+                  <div className="p-4 bg-slate-50 dark:bg-slate-900/60 border border-gray-100 dark:border-gray-800 rounded-xl space-y-3">
+                    <h4 className="font-bold text-sm uppercase tracking-wider text-gray-500">Certified Columns ({skills.length})</h4>
+                    <div className="max-h-32 overflow-y-auto space-y-1">
+                      {skills.map((skill, idx) => (
+                        <p key={idx} className="text-sm font-semibold text-gray-700 dark:text-gray-300">• {skill}</p>
+                      ))}
                     </div>
                   </div>
                 </div>
 
-                <div className="flex justify-center gap-4">
-                  <Button onClick={handleSave} className="bg-green-600 hover:bg-green-700">
+                <div className="flex justify-center gap-3 pt-4 border-t border-gray-100 dark:border-gray-800/60">
+                  <Button
+                    onClick={handleSave}
+                    className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold flex items-center shadow-md border-0 h-10 px-6 text-sm"
+                  >
                     <Save className="h-4 w-4 mr-2" />
                     Save Skills Matrix
                   </Button>
-                  <Button onClick={() => setShowFinalTable(true)} variant="outline">
-                    <FileText className="h-4 w-4 mr-2" />
-                    Preview Table
+                  <Button
+                    onClick={() => setShowFinalTable(true)}
+                    variant="outline"
+                    className="h-10 px-6 text-sm font-semibold border border-gray-200 hover:bg-slate-50 dark:border-gray-800 text-gray-700 dark:text-gray-300 dark:hover:bg-slate-900"
+                  >
+                    <FileText className="h-4 w-4 mr-2 text-indigo-500" />
+                    Preview Matrix
                   </Button>
                 </div>
               </div>
             )}
 
             {/* Navigation Buttons */}
-            <div className="flex justify-between mt-8">
-              <Button onClick={() => setCurrentStep(Math.max(1, currentStep - 1))} disabled={currentStep === 1} variant="outline">
-                <ArrowLeft className="h-4 w-4 mr-2" /> Previous
+            <div className="flex justify-between mt-8 pt-4 border-t border-gray-100 dark:border-gray-800">
+              <Button
+                onClick={() => setCurrentStep(Math.max(1, currentStep - 1))}
+                disabled={currentStep === 1}
+                variant="outline"
+                className="h-10 px-4 text-xs font-bold uppercase tracking-wider border border-gray-200 hover:bg-slate-50 dark:border-gray-800 text-gray-700 dark:text-gray-300 dark:hover:bg-slate-900 flex items-center gap-1.5"
+              >
+                <ArrowLeft className="h-4 w-4" /> Previous
               </Button>
-              <Button onClick={() => setCurrentStep(Math.min(4, currentStep + 1))} disabled={currentStep === 4 || !canProceedToNext()} className="bg-gradient-to-r from-orange-500 to-blue-500">
-                Next <ArrowRight className="h-4 w-4 ml-2" />
+              <Button
+                onClick={() => setCurrentStep(Math.min(4, currentStep + 1))}
+                disabled={currentStep === 4 || !canProceedToNext()}
+                className="h-10 px-4 text-xs font-bold uppercase tracking-wider bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-1.5 border-0 shadow-md"
+              >
+                Next <ArrowRight className="h-4 w-4" />
               </Button>
             </div>
           </CardContent>

@@ -16,6 +16,7 @@ interface TableProps {
   isLoading?: boolean
   emptyMessage?: string
   onInspect?: (row: any) => void
+  startIndex?: number
 }
 
 export default function Table({
@@ -24,6 +25,7 @@ export default function Table({
   isLoading,
   emptyMessage = "No data available",
   onInspect,
+  startIndex = 0,
 }: TableProps) {
   const { isDark } = useTheme()
 
@@ -106,7 +108,7 @@ export default function Table({
                 >
                   {/* S.No. value */}
                   <td className="px-6 py-4 text-sm font-medium text-blue-700 dark:text-blue-300 border-r border-gray-200 dark:border-gray-700">
-                    {index + 1}
+                    {startIndex + index + 1}
                   </td>
 
                   {/* Dynamic values */}

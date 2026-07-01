@@ -11,7 +11,7 @@ function buildConfig(): sql.config {
   return {
     // If using instanceName, the 'server' field should only be the hostname/IP.
     // We strip any \Instance part from the host string to avoid connection errors in Tedious.
-    server: (process.env.DB_HOST || 'localhost').split('\\')[0],
+    server: (process.env.DB_SERVER || process.env.DB_HOST || 'localhost').split('\\')[0],
     // If using a named instance, port must be undefined for SQL Browser service to work
     port: instance ? undefined : (process.env.DB_PORT ? Number(process.env.DB_PORT) : 1433),
     database: process.env.DB_NAME || 'Dawlance_Skills_Matrix',
@@ -52,7 +52,6 @@ export async function getDb(): Promise<sql.ConnectionPool> {
     await Promise.all([
       ensureResetTokensTable(newPool),
       ensureUserColumns(newPool),
-      ensurePasswordChangeRequestsTable(newPool)
     ]).catch(err => {
       console.error('Database schema initialization failed:', err);
       throw err; // Fail the connection if schema can't be verified
@@ -74,10 +73,12 @@ let resetTokensTableReady = false;
 /**
  * Ensure the password_reset_tokens table exists.
  * Only hits the DB on the first call per process.
+ * Accepts an optional pre-existing pool to avoid re-entering getDb during init.
  */
-export async function ensureResetTokensTable(db: sql.ConnectionPool): Promise<void> {
+export async function ensureResetTokensTable(db?: sql.ConnectionPool): Promise<void> {
   if (resetTokensTableReady) return;
-  await db.request().query(`
+  const conn = db ?? await getDb();
+  await conn.request().query(`
     IF OBJECT_ID('password_reset_tokens', 'U') IS NULL
     CREATE TABLE password_reset_tokens (
       id         INT IDENTITY(1,1) PRIMARY KEY,
@@ -121,25 +122,50 @@ export async function ensureUserColumns(db: sql.ConnectionPool): Promise<void> {
 let pwdChangeRequestsTableReady = false;
 
 /**
- * Ensure the password_change_requests table exists (SQL Server 2016 compatible).
+ * Ensure the password_change_requests table exists with snake_case columns.
+ * If the table was previously created with camelCase columns, renames them.
  * Only hits the DB on the first call per process.
  */
-export async function ensurePasswordChangeRequestsTable(db: sql.ConnectionPool): Promise<void> {
+export async function ensurePasswordChangeRequestsTable(): Promise<void> {
   if (pwdChangeRequestsTableReady) return;
+  const db = await getDb();
+
+  // Create table if it doesn't exist yet
   await db.request().query(`
     IF OBJECT_ID('password_change_requests', 'U') IS NULL
     CREATE TABLE password_change_requests (
       id                 INT IDENTITY(1,1) PRIMARY KEY,
-      userId             NVARCHAR(24)   NOT NULL,
-      userName           NVARCHAR(255)  NOT NULL,
+      user_id            NVARCHAR(24)   NOT NULL,
+      user_name          NVARCHAR(255)  NOT NULL,
       email              NVARCHAR(255)  NOT NULL,
       role               NVARCHAR(50)   NOT NULL,
-      newPasswordHash    NVARCHAR(255)  NOT NULL,
+      new_password_hash  NVARCHAR(255)  NOT NULL,
       status             NVARCHAR(20)   NOT NULL DEFAULT 'pending',
-      requestedAt        DATETIME2      NOT NULL DEFAULT GETDATE(),
-      resolvedAt         DATETIME2      NULL,
-      resolvedBy         NVARCHAR(255)  NULL
+      requested_at       DATETIME2      NOT NULL DEFAULT GETDATE(),
+      resolved_at        DATETIME2      NULL,
+      resolved_by        NVARCHAR(255)  NULL
     )
   `);
+
+  // Migrate legacy camelCase columns → snake_case (safe to run on already-correct schema)
+  const migrations: [string, string][] = [
+    ['userId',          'user_id'],
+    ['userName',        'user_name'],
+    ['newPasswordHash', 'new_password_hash'],
+    ['requestedAt',     'requested_at'],
+    ['resolvedAt',      'resolved_at'],
+    ['resolvedBy',      'resolved_by'],
+  ];
+
+  for (const [oldName, newName] of migrations) {
+    await db.request().query(`
+      IF EXISTS (
+        SELECT * FROM sys.columns
+        WHERE object_id = OBJECT_ID('password_change_requests') AND name = '${oldName}'
+      )
+      EXEC sp_rename 'password_change_requests.${oldName}', '${newName}', 'COLUMN'
+    `);
+  }
+
   pwdChangeRequestsTableReady = true;
 }

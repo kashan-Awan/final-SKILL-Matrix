@@ -1,6 +1,7 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
@@ -17,19 +18,42 @@ import FullscreenChart from "../components/FullscreenChart"
 import DatabaseLoading from "../components/DatabaseLoading"
 import DatabaseError from "../components/DatabaseError"
 import { useEmployees } from "@/hooks/useEmployees"
+import useUserPermissions from "@/hooks/useUserPermissions"
 
 export default function FridgeManufacturingDashboard() {
+  const router = useRouter()
+  const { userSession, isLoading: permissionsLoading } = useUserPermissions()
   const { employees, loading, error, refetch } = useEmployees()
   const [selectedDepartment, setSelectedDepartment] = useState<string>("all")
   const [selectedSkillLevel, setSelectedSkillLevel] = useState<string>("all")
   const [selectedGender, setSelectedGender] = useState<string>("all")
   const [selectedFactory, setSelectedFactory] = useState<string>("all")
 
-  // Debug log when filters change
-
-  // Also create a handler function to test
   const handleDepartmentChange = (value: string) => {
     setSelectedDepartment(value)
+  }
+
+  useEffect(() => {
+    if (!permissionsLoading) {
+      if (!userSession) {
+        router.push("/login")
+      } else if (userSession.role === "employee" || userSession.role === "user") {
+        router.push("/employee-dashboard")
+      }
+    }
+  }, [userSession, permissionsLoading, router])
+
+  // Show loading state if session check is in progress
+  if (permissionsLoading) {
+    return <DatabaseLoading message="Verifying session..." />
+  }
+
+  if (!userSession) {
+    return null
+  }
+
+  if (userSession.role === "employee" || userSession.role === "user") {
+    return null
   }
 
   // Show loading state

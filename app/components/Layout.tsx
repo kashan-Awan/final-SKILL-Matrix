@@ -26,53 +26,66 @@ export default function Layout({ children }: LayoutProps) {
   const navigation = [
     { name: "Employees", href: "/employees", icon: Users },
     { name: "Skills Mapping", href: "/skills-mapping", icon: Map },
-     { name: "Skill Matrix", href: "/skills_matrix_maker", icon: BarChart3 },
+    { name: "Skill Matrix", href: "/skills_matrix_maker", icon: BarChart3 },
   ]
+
+  const isEmployee = userSession?.role === 'employee' || userSession?.role === 'user';
+  const visibleNavigation = userSession
+    ? (isEmployee ? navigation.filter(item => item.name === 'Employees') : navigation)
+    : [];
 
   const handleLogout = () => {
     logout()
   }
 
-  const hideNavbar = pathname === "/login"
+  const publicPages = ['/login', '/forgot-password'];
+  const hideNavbar = publicPages.includes(pathname);
 
-  // If it's the login page, return children without any wrapper
-  if (pathname === "/login") {
+  // Public auth pages — render without any wrapper/navbar
+  if (hideNavbar) {
     return <>{children}</>
   }
 
+
   return (
-    <div
-      className="min-h-screen bg-white"
-    >
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-250">
       {!hideNavbar && (
-        <nav className="bg-white border-b sticky top-0 z-40">
-          <div className="w-full px-4 sm:px-6 lg:px-8">
-            <div className="relative grid grid-cols-[auto_1fr_auto] items-center gap-4 h-20">
-              {/* Left: Logo and Title */}
-              <Link href="/landing" className="flex items-center cursor-pointer">
-                <div className="flex items-center hover:scale-105 transition-transform">
-                  <div className="w-8 h-8 rounded-lg mr-3 flex items-center justify-center overflow-hidden border-2 border-[#1d7fd7]">
-                    <Image src="/dawlance-d.svg" alt="D" width={20} height={20} className="object-contain" />
+        <nav className="bg-white/85 dark:bg-gray-900/85 backdrop-blur-md border-b border-slate-200/80 dark:border-slate-800/80 sticky top-0 z-40">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex items-center justify-between h-16">
+              
+              {/* Left: Brand logo */}
+              <Link href="/landing" className="flex items-center cursor-pointer group flex-shrink-0">
+                <div className="flex items-center gap-2.5 transition-transform duration-200 group-hover:scale-[1.02]">
+                  <div className="w-9 h-9 rounded-xl flex items-center justify-center overflow-hidden border border-blue-500/20 bg-blue-50/50 dark:bg-blue-950/30">
+                    <Image src="/dawlance-d.svg" alt="D" width={22} height={22} className="object-contain" />
                   </div>
-                  <h1 className="text-2xl font-bold text-gray-900">Skills Portal</h1>
+                  <div className="flex flex-col">
+                    <span className="text-sm font-extrabold text-gray-950 dark:text-white tracking-tight leading-none">
+                      Dawlance
+                    </span>
+                    <span className="text-[10px] text-blue-600 dark:text-blue-400 font-bold uppercase tracking-wider mt-0.5">
+                      Skills Portal
+                    </span>
+                  </div>
                 </div>
               </Link>
-
-              {/* Center: Navigation */}
-              <div className="hidden sm:flex items-center justify-center gap-6 px-4 min-w-0">
-                {navigation.map((item) => {
+              
+              {/* Center: Navigation Links */}
+              <div className="hidden md:flex items-center gap-1">
+                {visibleNavigation.map((item) => {
                   const Icon = item.icon
                   const isActive = pathname === item.href
                   return (
-                    <Link key={item.name} href={item.href} prefetch={true} className="inline-block">
+                    <Link key={item.name} href={item.href} prefetch={true}>
                       <div
-                        className={`inline-flex items-center px-4 py-2 rounded-xl text-lg font-semibold transition-all duration-200 hover:scale-105 hover:-translate-y-0.5 ${
+                        className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-sm font-semibold tracking-wide transition-all duration-200 cursor-pointer ${
                           isActive
-                            ? "bg-[#1d7fd7] text-white"
-                            : "text-gray-700 hover:text-gray-900 hover:bg-gray-100"
+                            ? "bg-blue-50 text-blue-600 border border-blue-100 dark:bg-blue-950/40 dark:text-blue-400 dark:border-blue-900/30"
+                            : "text-gray-500 hover:text-blue-600 dark:text-gray-400 dark:hover:text-blue-400 hover:bg-blue-50/30 dark:hover:bg-blue-950/10 border border-transparent"
                         }`}
                       >
-                        <Icon className="h-5 w-5 mr-2" />
+                        <Icon className="h-4 w-4" />
                         {item.name}
                       </div>
                     </Link>
@@ -80,125 +93,96 @@ export default function Layout({ children }: LayoutProps) {
                 })}
               </div>
 
-              {/* Right: User Info + Logout */}
-              <div className="hidden sm:flex items-center space-x-4 ml-4">
+              {/* Right: User Section */}
+              <div className="hidden md:flex items-center gap-4">
                 {userSession && (
-                  <div className="flex items-center space-x-2 mr-2 px-4 py-2 rounded-xl transition-all duration-300 hover:shadow-lg bg-blue-50/80 border border-blue-200/50">
-                    <div className={`flex items-center space-x-2 px-3 py-1 rounded-full border text-xs font-medium ${getRoleColor(userSession.role, false)}`}>
-                      <span className="capitalize">{userSession.role}</span>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <span className="text-sm font-medium leading-5 transition-colors duration-300 cursor-default text-gray-700 hover:text-gray-900">
-                        {userSession.name || userSession.email || "Unknown User"}
+                  <div className="flex items-center gap-3 pl-3 border-l border-slate-200 dark:border-slate-800">
+                    <div className="flex flex-col text-right">
+                      <span className="text-sm font-semibold text-gray-800 dark:text-gray-250 leading-tight">
+                        {userSession.name || "Unknown Operator"}
                       </span>
-                      {userSession.department && (
-                        <>
-                          <span className="text-gray-400">|</span>
-                          <span className="text-xs transition-colors duration-300 text-gray-500 hover:text-gray-600">
-                            {userSession.department}
-                          </span>
-                        </>
-                      )}
+                      <span className="text-xs text-gray-450 font-medium capitalize">
+                        {userSession.role}{userSession.department ? ` • ${userSession.department}` : ""}
+                      </span>
                     </div>
                   </div>
                 )}
 
+                <button
+                  onClick={handleLogout}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-250 hover:border-red-200 hover:bg-red-50 text-slate-650 hover:text-red-600 dark:border-slate-800 dark:hover:border-red-950 dark:hover:bg-red-950/20 dark:text-slate-400 dark:hover:text-red-400 text-xs font-bold uppercase tracking-wider transition-colors"
+                >
+                  <LogOut className="h-3.5 w-3.5" />
+                  Logout
+                </button>
+              </div>
+
+              {/* Mobile Trigger */}
+              <div className="md:hidden flex items-center">
+                <button
+                  onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                  className="p-2 rounded-xl transition-all text-gray-500 hover:bg-slate-100 dark:hover:bg-slate-800"
+                >
+                  {isMobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Mobile Navigation Panel */}
+          {isMobileMenuOpen && (
+            <div className="md:hidden border-t border-slate-100 dark:border-slate-800 bg-white dark:bg-gray-900 p-4 space-y-3">
+               {visibleNavigation.map((item) => {
+                const Icon = item.icon
+                const isActive = pathname === item.href
+                return (
+                  <Link key={item.name} href={item.href} prefetch={true} className="block">
+                    <div
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold uppercase tracking-wider transition-all ${
+                        isActive
+                          ? "bg-blue-600 text-white"
+                          : "text-gray-655 hover:bg-slate-50 dark:text-gray-300 dark:hover:bg-slate-800/40"
+                      }`}
+                    >
+                      <Icon className="h-4.5 w-4.5" />
+                      {item.name}
+                    </div>
+                  </Link>
+                )
+              })}
+
+              <div className="border-t border-slate-100 dark:border-slate-800 pt-4 mt-2">
+                {userSession && (
+                  <div className="p-3 bg-slate-50 dark:bg-slate-900/60 border border-slate-100 dark:border-slate-800 rounded-xl mb-4">
+                    <div>
+                      <span className="text-sm font-bold text-gray-900 dark:text-white block">
+                        {userSession.name || userSession.email}
+                      </span>
+                      <span className="text-xs text-gray-400 font-semibold block capitalize">
+                        {userSession.role} • {userSession.department || "No Department"}
+                      </span>
+                    </div>
+                  </div>
+                )}
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={handleLogout}
-                  className="flex items-center bg-transparent"
+                  className="w-full h-10 border border-slate-200 dark:border-slate-800 text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 bg-transparent"
                 >
-                  <LogOut className="h-4 w-4 mr-2" />
+                  <LogOut className="h-4 w-4" />
                   Logout
                 </Button>
               </div>
-
-              {/* Mobile: Menu toggle */}
-              <div className="sm:hidden flex items-center">
-                <button
-                  onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                  className="p-2 rounded-xl transition-all hover:scale-110 text-gray-700 hover:bg-gray-100"
-                >
-                  {isMobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-                </button>
-              </div>
             </div>
-
-            {/* Mobile Menu */}
-            {isMobileMenuOpen && (
-              <div className="sm:hidden pt-2 pb-3 space-y-1 bg-white">
-                {navigation.map((item) => {
-                  const Icon = item.icon
-                  const isActive = pathname === item.href
-                  return (
-                    <Link key={item.name} href={item.href} prefetch={true} className="block">
-                      <div
-                        onClick={() => setIsMobileMenuOpen(false)}
-                        className={`w-full text-left flex items-center px-3 py-3 mx-2 rounded-xl text-lg font-medium transition-all duration-200 ${
-                          isActive
-                            ? "bg-[#1d7fd7] text-white"
-                            : "text-gray-700 hover:text-gray-900 hover:bg-gray-100"
-                        }`}
-                      >
-                        <Icon className="h-5 w-5 mr-3" />
-                        {item.name}
-                      </div>
-                    </Link>
-                  )
-                })}
-
-                <div className="border-t border-gray-200 pt-4 pb-3 mx-2">
-                  {userSession && (
-                    <div className="flex items-center px-3 mb-3 py-2 rounded-xl transition-all duration-300 bg-blue-50/80 hover:bg-blue-100/80 border border-blue-200/50">
-                      <div
-                        className={`flex items-center space-x-2 px-3 py-1 rounded-full border text-xs font-medium ${
-                          userSession.role === "admin"
-                            ? "bg-red-100 text-red-800 border-red-200"
-                            : userSession.role === "manager"
-                            ? "bg-[#1d7fd7]/10 text-[#1d7fd7] border-[#1d7fd7]/20"
-                            : "bg-green-100 text-green-800 border-green-200"
-                        }`}
-                      >
-                        <span className="capitalize">{userSession.role}</span>
-                      </div>
-                      <div className="ml-3">
-                        <span className="text-sm font-medium leading-5 cursor-default block text-gray-700 hover:text-gray-900">
-                          {userSession.name || userSession.email}
-                        </span>
-                        {userSession.department && (
-                          <div className="mt-0.5 text-xs text-gray-500">
-                            {userSession.department}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  )}
-
-                  <div className="flex items-center px-3 space-x-3">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={handleLogout}
-                      className="flex items-center bg-transparent"
-                    >
-                      <LogOut className="h-4 w-4 mr-2" />
-                      Logout
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
+          )}
         </nav>
       )}
 
-
       {/* Main Content */}
-      <main className="w-full px-4 sm:px-6 lg:px-8">
-        <div className="px-4 py-6 sm:px-0">
-          {children}
-        </div>
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {children}
       </main>
     </div>
   )

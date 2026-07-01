@@ -110,6 +110,9 @@ export const useUserPermissions = () => {
 
   const logout = () => {
     localStorage.removeItem('userSession');
+    localStorage.removeItem('token');
+    localStorage.removeItem('adminToken');
+    localStorage.removeItem('adminUser');
     setUserSession(null);
     window.location.href = '/login';
   };

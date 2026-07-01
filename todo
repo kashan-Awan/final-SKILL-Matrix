@@ -1,0 +1,6 @@
+1. Add Employee shall show list of employees, with a search bar that can search employee names, id, dept.
+2. Save skills matrix does not work, in the same page I canot move Next.
+3. in the skills mapping page, the view matrix does not work.
+4. in the department metric in Employees page, Skills: 0, still wrong api being called.
+5. Inspect skills is working, UI needs to be changed/enhanced.
+6. 

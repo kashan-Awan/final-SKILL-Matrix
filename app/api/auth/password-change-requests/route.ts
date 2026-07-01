@@ -54,6 +54,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Ensure table exists first (no db argument needed)
     await ensurePasswordChangeRequestsTable();
     const db = await getDb();
 

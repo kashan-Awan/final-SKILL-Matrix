@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import bcrypt from 'bcryptjs';
 import { getDb, ensurePasswordChangeRequestsTable } from '@/lib/db';
 
 interface RouteContext {
@@ -54,12 +55,12 @@ export async function PATCH(req: NextRequest, { params }: RouteContext) {
     }
 
     if (action === 'approve') {
-      // Apply the pre-hashed password to useraccount
+      // Apply the pre-hashed password to dawlance_user
       await db.request()
         .input('hash', changeReq.new_password_hash)
         .input('email', changeReq.email)
         .query(`
-          UPDATE useraccount
+          UPDATE dawlance_user
           SET password = @hash
           WHERE LOWER(email) = LOWER(@email)
         `);

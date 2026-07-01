@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { 
   User, Phone, Calendar, Briefcase, MapPin, Clock, Wrench, Edit2, Save, X,
   Target, Trophy, Star, TrendingUp, Building2, Users, Award, Factory, 
-  IdCard, Smartphone, CheckCircle, LogOut, Mail, CalendarDays, AlertCircle,
+  IdCard, Smartphone, CheckCircle, Mail, CalendarDays, AlertCircle,
   Activity, Shield
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -247,12 +247,6 @@ export default function EmployeeDashboard() {
     }
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('adminToken');
-    localStorage.removeItem('userSession');
-    window.location.href = '/login';
-  };
 
   const getProficiencyColor = (level: string) => {
     switch (level?.toLowerCase()) {
@@ -322,10 +316,6 @@ export default function EmployeeDashboard() {
             </h1>
             <p className="text-gray-500 mt-1">Welcome back, {employee.name}</p>
           </div>
-          <Button onClick={handleLogout} variant="outline" className="text-red-600 border-red-200 hover:bg-red-50">
-            <LogOut className="h-4 w-4 mr-2" />
-            Logout
-          </Button>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

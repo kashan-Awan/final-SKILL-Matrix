@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
-import { Filter, RefreshCw, Target } from "lucide-react"
+import { Filter, RefreshCw, Target, BarChart3, Users } from "lucide-react"
 import DashboardOverview from "../components/dashboard-overview"
 import SkillLevelBreakdown from "../components/skill-level-breakdown"
 import GenderDiversityOverview from "../components/gender-diversity-overview"
@@ -93,7 +93,15 @@ export default function FridgeManufacturingDashboard() {
         if (filterLevel === "low" && empSkillLevel !== "low") return false;
       }
     }
-    if (selectedGender !== "all" && employee.gender !== selectedGender) return false
+    if (selectedGender !== "all") {
+      const empGender = employee.gender?.toLowerCase();
+      const filterGender = selectedGender.toLowerCase();
+      if (filterGender === "others" || filterGender === "other") {
+        if (empGender === "male" || empGender === "female") return false;
+      } else {
+        if (empGender !== filterGender) return false;
+      }
+    }
     return true
   })
   
@@ -216,6 +224,7 @@ export default function FridgeManufacturingDashboard() {
                     <SelectItem value="all">All Genders</SelectItem>
                     <SelectItem value="Male">Male</SelectItem>
                     <SelectItem value="Female">Female</SelectItem>
+                    <SelectItem value="Others">Others</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -275,7 +284,7 @@ export default function FridgeManufacturingDashboard() {
       )}
 
       {/* Comprehensive Dashboard Overview - TOP SECTION */}
-      <Card className="bg-gray-50 shadow-lg border border-gray-200">
+      <Card className="w-full overflow-hidden bg-gray-50 shadow-lg border border-gray-200">
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
             <CardTitle className="text-xl">Manufacturing Overview Dashboard</CardTitle>
@@ -296,10 +305,13 @@ export default function FridgeManufacturingDashboard() {
       {/* Detailed Analysis Grid */}
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
         {/* Skill Level Breakdown */}
-        <Card className="bg-gray-50 shadow-lg border border-gray-200">
+        <Card className="w-full overflow-hidden bg-gray-50 shadow-lg border border-gray-200">
           <CardHeader className="flex flex-row items-center justify-between">
             <div>
-              <CardTitle>Detailed Skill Level Analysis</CardTitle>
+              <div className="flex items-center gap-2">
+                <BarChart3 className="h-5 w-5 text-blue-600" />
+                <CardTitle className="text-lg font-semibold text-gray-900 dark:text-white">Detailed Skill Level Analysis</CardTitle>
+              </div>
               <CardDescription>Employee skill levels by department and gender</CardDescription>
             </div>
             <FullscreenChart
@@ -316,10 +328,13 @@ export default function FridgeManufacturingDashboard() {
         </Card>
 
         {/* Gender Diversity Overview */}
-        <Card className="bg-gray-50 shadow-lg border border-gray-200">
+        <Card className="w-full overflow-hidden bg-gray-50 shadow-lg border border-gray-200">
           <CardHeader className="flex flex-row items-center justify-between">
             <div>
-              <CardTitle>Gender Diversity Deep Dive</CardTitle>
+              <div className="flex items-center gap-2">
+                <Users className="h-5 w-5 text-green-600" />
+                <CardTitle className="text-lg font-semibold text-gray-900 dark:text-white">Gender Diversity Deep Dive</CardTitle>
+              </div>
               <CardDescription>Gender distribution across departments and skill levels</CardDescription>
             </div>
             <FullscreenChart
@@ -337,12 +352,12 @@ export default function FridgeManufacturingDashboard() {
 
       
        {/* Enhanced Skill Comparison Matrix */}
-      <Card className="bg-gray-50 shadow-lg border border-gray-200">
+      <Card className="w-full overflow-hidden bg-gray-50 shadow-lg border border-gray-200">
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
               <div className="flex items-center gap-2">
                 <Target className="h-5 w-5 text-purple-600" />
-                <CardTitle>Skills Comparison Matrix</CardTitle>
+                <CardTitle className="text-lg font-semibold text-gray-900 dark:text-white">Skills Comparison Matrix</CardTitle>
               </div>
             <CardDescription>
               Skill density and distribution across departments - hover for detailed insights

@@ -39,6 +39,7 @@ export default function LoginPage() {
         localStorage.setItem("token", token);
         localStorage.setItem("adminToken", token);
         localStorage.setItem("userSession", JSON.stringify(user));
+        window.dispatchEvent(new Event("session-update"));
 
         const userRole = (user.role || "").toLowerCase();
         if (userRole === "admin") {

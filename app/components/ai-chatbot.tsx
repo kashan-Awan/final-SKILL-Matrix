@@ -266,6 +266,214 @@ const renderMachineSkills = (data: any) => (
   </div>
 );
 
+// Local rule-based query processor for fallback when API key is missing
+const localQueryProcessor = (prompt: string, data: Employee[]): Message => {
+  const query = prompt.toLowerCase().trim();
+
+  // 1. GREETING/HELP
+  const greetings = ["hello", "hi", "hey", "help", "who are you"];
+  if (greetings.some(g => query === g || query.startsWith(g + " "))) {
+    return {
+      id: Date.now().toString(),
+      text: `Hi! 👋 I'm your local Skills Matrix Assistant.\n\nSince no Gemini API key is configured, I am running in **Local Query Mode** using the database on this page.\n\n🔍 You can ask me to analyze the data using requests like:\n• **"show top employees in [department]"** (e.g. Sheet Molding, Injection Molding)\n• **"what is the gender ratio / female ratio?"**\n• **"most skilled in [skill/machine]"**\n• **"how many employees in [department]"**\n• **"list departments"**\n\n📊 Loaded: ${data.length} employees across ${[...new Set(data.map(e => e.department))].length} departments.\n\nWhat would you like to analyze?`,
+      isUser: false,
+      timestamp: new Date(),
+      type: "text"
+    };
+  }
+
+  // 2. LIST DEPARTMENTS
+  if (query.includes("list department") || query.includes("show department") || query.includes("what departments")) {
+    const depts = [...new Set(data.map(e => e.department))].filter(Boolean);
+    return {
+      id: Date.now().toString(),
+      text: `Here are the active departments in the database:\n\n${depts.map(d => `• **${d}**`).join("\n")}`,
+      isUser: false,
+      timestamp: new Date(),
+      type: "text"
+    };
+  }
+
+  // Helper to normalize department match
+  const findDept = (text: string) => {
+    const depts = [...new Set(data.map(e => e.department))].filter(Boolean);
+    return depts.find(d => text.includes(d.toLowerCase()));
+  };
+
+  // 3. TOP EMPLOYEES
+  if (query.includes("top") || query.includes("best") || query.includes("highest")) {
+    const dept = findDept(query);
+    const filteredEmployees = dept 
+      ? data.filter(e => e.department?.toLowerCase() === dept.toLowerCase())
+      : data;
+
+    // Sort by performanceScore (descending), then yearsExperience (descending)
+    const sorted = [...filteredEmployees].sort((a, b) => {
+      const perfA = a.performanceScore ?? 0;
+      const perfB = b.performanceScore ?? 0;
+      if (perfB !== perfA) return perfB - perfA;
+      return (b.yearsExperience ?? 0) - (a.yearsExperience ?? 0);
+    });
+
+    const limitMatch = query.match(/\b\d+\b/);
+    const limit = limitMatch ? parseInt(limitMatch[0], 10) : 5;
+    const topList = sorted.slice(0, limit);
+
+    if (topList.length === 0) {
+      return {
+        id: Date.now().toString(),
+        text: `I couldn't find any employees in the department "${dept || 'specified'}".`,
+        isUser: false,
+        timestamp: new Date(),
+        type: "text"
+      };
+    }
+
+    return {
+      id: Date.now().toString(),
+      text: `Found ${topList.length} top employees${dept ? ` in the **${dept}** department` : ""}:`,
+      isUser: false,
+      timestamp: new Date(),
+      type: "employee-list",
+      data: {
+        type: "employee-list",
+        title: `Top Employees ${dept ? `- ${dept}` : "(All)"}`,
+        summary: `Top ${topList.length} employees sorted by performance and experience levels.`,
+        employees: topList.map(e => ({
+          name: e.name,
+          department: e.department,
+          skillLevel: e.skillLevel,
+          yearsExperience: e.yearsExperience || 0,
+          performanceScore: e.performanceScore || 85,
+          reason: `Ranks high with ${e.yearsExperience || 0} years of experience and "${e.skillLevel}" skill level.`,
+          machineSkills: e.machineSkills || []
+        }))
+      }
+    };
+  }
+
+  // 4. DIVERSITY & GENDER RATIO
+  if (query.includes("diversity") || query.includes("gender") || query.includes("ratio") || query.includes("female") || query.includes("male") || query.includes("women") || query.includes("men")) {
+    const dept = findDept(query);
+    const filtered = dept 
+      ? data.filter(e => e.department?.toLowerCase() === dept.toLowerCase())
+      : data;
+
+    const femaleCount = filtered.filter(e => e.gender?.toLowerCase() === "female").length;
+    const maleCount = filtered.filter(e => e.gender?.toLowerCase() === "male").length;
+    const total = filtered.length;
+    const femalePercentage = total > 0 ? Math.round((femaleCount / total) * 100) : 0;
+
+    // Get breakdown by department if no specific department was requested
+    let departmentBreakdown = undefined;
+    if (!dept) {
+      const depts = [...new Set(data.map(e => e.department))].filter(Boolean);
+      departmentBreakdown = depts.map(d => {
+        const dEmps = data.filter(e => e.department === d);
+        const fCount = dEmps.filter(e => e.gender?.toLowerCase() === "female").length;
+        const mCount = dEmps.filter(e => e.gender?.toLowerCase() === "male").length;
+        const dTotal = dEmps.length;
+        return {
+          department: d,
+          femaleCount: fCount,
+          maleCount: mCount,
+          femalePercentage: dTotal > 0 ? Math.round((fCount / dTotal) * 100) : 0
+        };
+      });
+    }
+
+    return {
+      id: Date.now().toString(),
+      text: `Gender diversity report generated${dept ? ` for **${dept}**` : ""}:`,
+      isUser: false,
+      timestamp: new Date(),
+      type: "diversity-report",
+      data: {
+        type: "diversity-report",
+        femaleCount,
+        maleCount,
+        femalePercentage,
+        departmentBreakdown
+      }
+    };
+  }
+
+  // 5. EMPLOYEE COUNTS / DEPARTMENT STATS
+  if (query.includes("how many") || query.includes("count") || query.includes("statistics") || query.includes("stats")) {
+    const dept = findDept(query);
+    if (dept) {
+      const filtered = data.filter(e => e.department === dept);
+      const avgExp = filtered.length > 0 
+        ? Math.round(filtered.reduce((sum, e) => sum + (e.yearsExperience || 0), 0) / filtered.length)
+        : 0;
+      
+      const advanced = filtered.filter(e => e.skillLevel?.toLowerCase().includes("advanced") || e.skillLevel?.toLowerCase().includes("expert")).length;
+      const high = filtered.filter(e => e.skillLevel?.toLowerCase() === "high").length;
+      const medium = filtered.filter(e => e.skillLevel?.toLowerCase() === "medium").length;
+
+      return {
+        id: Date.now().toString(),
+        text: `Department statistics for **${dept}**:`,
+        isUser: false,
+        timestamp: new Date(),
+        type: "department-stats",
+        data: {
+          type: "department-stats",
+          title: `${dept} Statistics`,
+          summary: `Overview of workforce size, experience and capabilities in the ${dept} department.`,
+          totalEmployees: filtered.length,
+          avgExperience: avgExp,
+          skillDistribution: { advanced, high, medium }
+        }
+      };
+    }
+  }
+
+  // 6. MACHINE / SKILLS SEARCH
+  if (query.includes("machine") || query.includes("skill") || query.includes("operator") || query.includes("expert in") || query.includes("skilled in")) {
+    // Look for skill keywords in prompt
+    const skillKeywords = ["injection", "molding", "press", "assembly", "leak", "evacuation", "charging", "foaming", "welding", "bending"];
+    const matchedSkill = skillKeywords.find(k => query.includes(k));
+    
+    const filtered = data.filter(e => {
+      if (!e.machineSkills || e.machineSkills.length === 0) return false;
+      return e.machineSkills.some(s => s.toLowerCase().includes(matchedSkill || query));
+    });
+
+    if (filtered.length > 0) {
+      return {
+        id: Date.now().toString(),
+        text: `Found ${filtered.length} employees with skills related to "${matchedSkill || query}":`,
+        isUser: false,
+        timestamp: new Date(),
+        type: "machine-skills",
+        data: {
+          type: "machine-skills",
+          title: `Most Skilled in ${matchedSkill ? matchedSkill.charAt(0).toUpperCase() + matchedSkill.slice(1) : 'Requested Machine/Skill'}`,
+          summary: `Employees certified in operating or managing specific systems.`,
+          employees: filtered.map(e => ({
+            name: e.name,
+            department: e.department,
+            skillLevel: e.skillLevel,
+            yearsExperience: e.yearsExperience || 0,
+            machineSkills: e.machineSkills || [],
+            reason: `Qualified operator with specialized training.`
+          }))
+        }
+      };
+    }
+  }
+
+  // 7. DEFAULT LOCAL FALLBACK Response
+  return {
+    id: Date.now().toString(),
+    text: `I couldn't run a deep AI analysis because no Gemini API key is configured. However, I scanned the local dataset of ${data.length} employees:\n\n• Available departments: ${[...new Set(data.map(e => e.department))].filter(Boolean).slice(0, 5).join(", ")}...\n• Total headcount: ${data.length}\n• Female ratio: ${Math.round((data.filter(e => e.gender?.toLowerCase() === "female").length / data.length) * 100)}%\n\nTry asking me directly: **"show top employees in Sheet Molding"** or **"what is the gender ratio?"** to get a local report!`,
+    isUser: false,
+    timestamp: new Date(),
+    type: "text"
+  };
+};
+
 // Enhanced AI Service
 const callAIService = async (prompt: string, data: Employee[]): Promise<Message> => {
   // Quick responses for greetings
@@ -480,14 +688,8 @@ Provide insights and rank employees logically. Always include reasoning for sele
         };
     }
   } catch (error) {
-    console.error("AI Service Error:", error);
-    return {
-      id: Date.now().toString(),
-      text: `I couldn't find any employees matching your request. Please try:\n\n• Checking the department name spelling\n• Asking about a different department\n• Using more general terms (e.g., "show employees" instead of specific names)\n• Asking about available departments first`,
-      isUser: false,
-      timestamp: new Date(),
-      type: "text",
-    };
+    console.warn("AI Service API Error, falling back to local query processor:", error);
+    return localQueryProcessor(prompt, data);
   }
 };
 

@@ -33,6 +33,7 @@ import { Separator } from "@/components/ui/separator";
 import Table from "../components/Table";
 import type { Department, Employee } from "../types";
 import EmployeeInspectionModal from "../components/EmployeeInspectionModal";
+import ConfirmationModal from "../components/ConfirmationModal";
 import { employeesService } from "@/services/employees.service";
 import { departmentsService } from "@/services/departments.service";
 import { employeeSkillsService } from "@/services/employee-skills.service";
@@ -71,6 +72,10 @@ export default function EmployeesPage() {
   });
   const [skillInput, setSkillInput] = useState<SkillInput>({ name: "", level: "" });
   const [formError, setFormError] = useState<string | null>(null);
+  const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [deletingEmployee, setDeletingEmployee] = useState<Employee | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // State for department metrics
   const [departmentMetrics, setDepartmentMetrics] = useState<
@@ -610,6 +615,75 @@ export default function EmployeesPage() {
     }
   };
 
+  // Edit an employee
+  const handleEditEmployee = async (data: EmployeeFormData) => {
+    if (!editingEmployee) return;
+
+    const skillsPayload = Array.isArray(data.skills)
+      ? data.skills.map(skill => ({ name: skill.name, level: skill.level }))
+      : [];
+
+    const editPayload = {
+      name: data.name?.trim() || "",
+      displayId: data.displayId?.trim() || "",
+      gender: data.gender || "MALE",
+      departmentId: data.departmentId || "",
+      skills: skillsPayload,
+    };
+
+    try {
+      const result = await employeesService.update(editingEmployee.id, editPayload);
+
+      if (!result.success) {
+        setFormError(result.error || result.message || 'Failed to update employee');
+        return;
+      }
+
+      setFormError(null);
+      setIsModalOpen(false);
+      setEditingEmployee(null);
+
+      // Reset form
+      setFormData({
+        name: "",
+        displayId: "",
+        gender: "MALE",
+        departmentId: "",
+        skills: [],
+      });
+      setSkillInput({ name: "", level: "" });
+
+      // Refresh employee data to get the latest information
+      await refreshEmployeeData();
+      
+    } catch (error) {
+      console.error("Error updating employee:", error);
+      setFormError("Error updating employee. Please try again.");
+    }
+  };
+
+  // Delete confirm handler
+  const handleDeleteConfirm = async () => {
+    if (!deletingEmployee) return;
+    setIsDeleting(true);
+    try {
+      const result = await employeesService.delete(deletingEmployee.id);
+      if (result.success) {
+        setEmployees(prev => prev.filter(emp => emp.id !== deletingEmployee.id));
+        setIsDeleteModalOpen(false);
+        setDeletingEmployee(null);
+        await refreshEmployeeData();
+      } else {
+        alert(result.message || 'Failed to delete employee');
+      }
+    } catch (error) {
+      console.error('Error deleting employee:', error);
+      alert('Error deleting employee. Please try again.');
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
 
@@ -1008,6 +1082,26 @@ export default function EmployeesPage() {
                       handleEmployeeInspection(employee);
                     });
                   }}
+                  onEdit={permissions.canEditEmployee ? (employee) => {
+                    setEditingEmployee(employee);
+                    setFormData({
+                      name: employee.name,
+                      displayId: employee.displayId || employee.employeeId || "",
+                      gender: (() => {
+                        const g = employee.gender?.toUpperCase();
+                        if (g === "FEMALE") return "FEMALE";
+                        if (g === "OTHERS" || g === "OTHER") return "OTHERS";
+                        return "MALE";
+                      })(),
+                      departmentId: employee.departmentId?.toString() || "",
+                      skills: Object.entries(employee.skills || {}).map(([name, level]) => ({ name, level: level as string })),
+                    });
+                    setIsModalOpen(true);
+                  } : undefined}
+                  onDelete={permissions.canDeleteEmployee ? (employee) => {
+                    setDeletingEmployee(employee);
+                    setIsDeleteModalOpen(true);
+                  } : undefined}
                 />
 
                 {/* Pagination Controls */}
@@ -1101,33 +1195,40 @@ export default function EmployeesPage() {
         }}
       />
 
-      {/* Add New Employee Modal */}
-      <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+      {/* Add/Edit Employee Modal */}
+      <Dialog open={isModalOpen} onOpenChange={(open) => {
+        setIsModalOpen(open);
+        if (!open) {
+          setEditingEmployee(null);
+          setFormData({
+            name: "",
+            displayId: "",
+            gender: "MALE",
+            departmentId: "",
+            skills: [],
+          });
+          setSkillInput({ name: "", level: "" });
+          setFormError(null);
+        }
+      }}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="text-xl font-bold">
-              Add New Employee
+              {editingEmployee ? "Edit Employee" : "Add New Employee"}
             </DialogTitle>
             <DialogDescription>
-              Enter the employee details to add them to the system.
+              {editingEmployee
+                ? "Update the details and skills for this employee."
+                : "Enter the employee details to add them to the system."}
             </DialogDescription>
           </DialogHeader>
           <form
             onSubmit={async (e) => {
               e.preventDefault();
-              await handleNewEmployee(formData);
-              // Only reset form and close modal if there's no error
-              if (!formError) {
-                setIsModalOpen(false);
-                setFormData({
-                  name: "",
-                  displayId: "",
-                  gender: "MALE",
-                  departmentId: "",
-                  skills: [],
-                });
-                setSkillInput({ name: "", level: "" });
-                setFormError(null);
+              if (editingEmployee) {
+                await handleEditEmployee(formData);
+              } else {
+                await handleNewEmployee(formData);
               }
             }}
             className="space-y-6"
@@ -1186,6 +1287,7 @@ export default function EmployeesPage() {
                   <SelectContent>
                     <SelectItem value="MALE">Male</SelectItem>
                     <SelectItem value="FEMALE">Female</SelectItem>
+                    <SelectItem value="OTHERS">Others</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -1287,6 +1389,7 @@ export default function EmployeesPage() {
                 variant="outline"
                 onClick={() => {
                   setIsModalOpen(false);
+                  setEditingEmployee(null);
                   setFormData({
                     name: "",
                     displayId: "",
@@ -1311,7 +1414,7 @@ export default function EmployeesPage() {
                 }
                 className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Save Employee
+                {editingEmployee ? "Update Employee" : "Save Employee"}
               </Button>
             </DialogFooter>
             {formError && (
@@ -1338,6 +1441,20 @@ export default function EmployeesPage() {
           </Button>
         </motion.div>
       )}
+      {/* Delete Employee Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => {
+          setIsDeleteModalOpen(false);
+          setDeletingEmployee(null);
+        }}
+        onConfirm={handleDeleteConfirm}
+        title="Delete Employee"
+        description="Are you sure you want to delete employee"
+        itemName={deletingEmployee?.name || ""}
+        type="delete"
+        loading={isDeleting}
+      />
       </div>
     </div>
   );

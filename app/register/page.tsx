@@ -13,6 +13,7 @@ export default function RegisterPage() {
   const [name, setName] = useState("")
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
+  const [gender, setGender] = useState("")
   const [userRole, setUserRole] = useState("employee")
   const [employeeId, setEmployeeId] = useState("") // Optional employee ID
   const [isLoading, setIsLoading] = useState(false)
@@ -36,6 +37,7 @@ export default function RegisterPage() {
           password,
           role: userRole.toUpperCase(),
           employeeId: employeeId?.trim() ? employeeId : null,
+          gender: gender?.trim() ? gender : null,
         }),
       })
 
@@ -158,6 +160,24 @@ export default function RegisterPage() {
                 className="pl-10 w-full h-12 rounded-lg border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-blue-500 focus:border-blue-500"
               />
             </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="gender" className="text-sm font-medium text-gray-700 dark:text-gray-305">
+              Gender *
+            </Label>
+            <select
+              id="gender"
+              value={gender}
+              onChange={(e) => setGender(e.target.value)}
+              className="w-full h-12 px-3 rounded-lg border border-gray-350 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm cursor-pointer"
+              required
+            >
+              <option value="">Select Gender</option>
+              <option value="Male">Male</option>
+              <option value="Female">Female</option>
+              <option value="Other">Other</option>
+            </select>
           </div>
           
           <div className="space-y-3">

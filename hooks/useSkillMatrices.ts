@@ -33,7 +33,7 @@ interface UseSkillMatricesReturn {
   error: string | null;
   refetch: () => Promise<void>;
   saveMatrix: (matrixData: any) => Promise<{ success: boolean; data?: any; error?: string }>;
-  updateMatrix: (id: string, matrixData: any) => Promise<{ success: boolean; data?: any }>;
+  updateMatrix: (id: string, matrixData: any) => Promise<{ success: boolean; data?: any; error?: string }>;
   deleteMatrix: (id: string) => Promise<boolean>;
   getMatrixById: (id: string) => Promise<SkillMatrix | null>;
 }
@@ -103,23 +103,21 @@ export const useSkillMatrices = (departmentId?: string): UseSkillMatricesReturn 
         };
       } else {
         const errMsg = result.error || result.message || 'Failed to save skill matrix';
-        setError(errMsg);
         return {
           success: false,
           error: errMsg
         };
       }
-    } catch (err) {
-      setError('Network error occurred while saving');
+    } catch (err: any) {
       console.error('Error saving skill matrix:', err);
       return {
         success: false,
-        error: 'Network error occurred while saving'
+        error: err.message || 'Network error occurred while saving'
       };
     }
   };
 
-  const updateMatrix = async (id: string, matrixData: any): Promise<{ success: boolean; data?: any }> => {
+  const updateMatrix = async (id: string, matrixData: any): Promise<{ success: boolean; data?: any; error?: string }> => {
     try {
       // Transform camelCase to snake_case for API
       const payload: any = { id };
@@ -135,13 +133,12 @@ export const useSkillMatrices = (departmentId?: string): UseSkillMatricesReturn 
         await fetchMatrices(); // Refresh the list
         return { success: true, data: result.data };
       } else {
-        setError(result.error || 'Failed to update skill matrix');
-        return { success: false };
+        const errMsg = result.error || result.message || 'Failed to update skill matrix';
+        return { success: false, error: errMsg };
       }
-    } catch (err) {
-      setError('Network error occurred while updating');
+    } catch (err: any) {
       console.error('Error updating skill matrix:', err);
-      return { success: false };
+      return { success: false, error: err.message || 'Network error occurred while updating' };
     }
   };
 
@@ -153,11 +150,9 @@ export const useSkillMatrices = (departmentId?: string): UseSkillMatricesReturn 
         await fetchMatrices(); // Refresh the list
         return true;
       } else {
-        setError(result.error || 'Failed to delete skill matrix');
         return false;
       }
     } catch (err) {
-      setError('Network error occurred while deleting');
       console.error('Error deleting skill matrix:', err);
       return false;
     }

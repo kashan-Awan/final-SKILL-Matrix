@@ -41,14 +41,48 @@ export default function Layout({ children }: LayoutProps) {
   const publicPages = ['/login', '/forgot-password'];
   const hideNavbar = publicPages.includes(pathname);
 
-  // Public auth pages — render without any wrapper/navbar
+  // Public auth pages — render without any navbar, but still keep common styling and footer
   if (hideNavbar) {
-    return <>{children}</>
+    return (
+      <div className="min-h-screen flex flex-col bg-gray-50 dark:bg-gray-900 transition-colors duration-250">
+        <main className="flex-grow flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+          {children}
+        </main>
+        <footer className="bg-white dark:bg-gray-950 border-t border-slate-200 dark:border-slate-800 transition-colors duration-250 py-8 w-full mt-auto">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex flex-col md:flex-row items-center justify-between gap-6 border-b border-slate-100 dark:border-slate-800 pb-6 mb-6">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center overflow-hidden border border-blue-500/20 bg-blue-50/50 dark:bg-blue-950/30">
+                  <Image src="/dawlance-d.svg" alt="D" width={18} height={18} className="object-contain" />
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-sm font-extrabold text-gray-950 dark:text-white tracking-tight leading-none">
+                    Dawlance
+                  </span>
+                  <span className="text-[10px] text-blue-600 dark:text-blue-400 font-bold uppercase tracking-wider mt-0.5">
+                    Skills Portal
+                  </span>
+                </div>
+              </div>
+
+              <div className="flex flex-wrap items-center justify-center gap-6 text-sm font-medium text-gray-500 dark:text-gray-400">
+                <Link href="#" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">Privacy Policy</Link>
+                <Link href="#" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">Terms of Service</Link>
+                <Link href="#" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">Support Helpline</Link>
+              </div>
+            </div>
+
+            <div className="flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-gray-400 dark:text-gray-500">
+              <p>© {new Date().getFullYear()} Dawlance. All rights reserved.</p>
+            </div>
+          </div>
+        </footer>
+      </div>
+    )
   }
 
-
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-250">
+    <div className="min-h-screen flex flex-col bg-gray-50 dark:bg-gray-900 transition-colors duration-250">
       {!hideNavbar && (
         <nav className="bg-white/85 dark:bg-gray-900/85 backdrop-blur-md border-b border-slate-200/80 dark:border-slate-800/80 sticky top-0 z-40">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -181,9 +215,44 @@ export default function Layout({ children }: LayoutProps) {
       )}
 
       {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-grow w-full">
         {children}
       </main>
+
+      {/* Common Footer */}
+      <footer className="bg-white dark:bg-gray-950 border-t border-slate-200 dark:border-slate-800 transition-colors duration-250 py-8 w-full mt-auto">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-6 border-b border-slate-100 dark:border-slate-800 pb-6 mb-6">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-lg flex items-center justify-center overflow-hidden border border-blue-500/20 bg-blue-50/50 dark:bg-blue-950/30">
+                <Image src="/dawlance-d.svg" alt="D" width={18} height={18} className="object-contain" />
+              </div>
+              <div className="flex flex-col">
+                <span className="text-sm font-extrabold text-gray-950 dark:text-white tracking-tight leading-none">
+                  Dawlance
+                </span>
+                <span className="text-[10px] text-blue-600 dark:text-blue-400 font-bold uppercase tracking-wider mt-0.5">
+                  Skills Portal
+                </span>
+              </div>
+            </div>
+
+            <div className="flex flex-wrap items-center justify-center gap-6 text-sm font-medium text-gray-500 dark:text-gray-400">
+              <Link href="#" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">Privacy Policy</Link>
+              <Link href="#" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">Terms of Service</Link>
+              <Link href="#" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">Support Helpline</Link>
+              <Link href="#" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">Documentation</Link>
+            </div>
+          </div>
+
+          <div className="flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-gray-400 dark:text-gray-500">
+            <p>© {new Date().getFullYear()} Dawlance. All rights reserved.</p>
+            <p className="flex items-center gap-1">
+              Empowering workforce capability and line compliance.
+            </p>
+          </div>
+        </div>
+      </footer>
     </div>
   )
 }

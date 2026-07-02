@@ -13,6 +13,7 @@ export default function RegisterPage() {
     employeeId: "",
     password: "",
     role: "employee",
+    gender: "",
   });
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<{ text: string; type: "success" | "error" } | null>(null);
@@ -31,12 +32,13 @@ export default function RegisterPage() {
           employeeId: form.employeeId || null,
           password: form.password,
           role: form.role.toUpperCase(),
+          gender: form.gender || null,
         }),
       });
       const data = await res.json();
       if (res.ok && data.success) {
         setMessage({ text: "Registration request submitted! Wait for admin approval.", type: "success" });
-        setForm({ name: "", email: "", employeeId: "", password: "", role: "employee" });
+        setForm({ name: "", email: "", employeeId: "", password: "", role: "employee", gender: "" });
       } else {
         setMessage({ text: data.message || "Registration failed.", type: "error" });
       }
@@ -85,6 +87,20 @@ export default function RegisterPage() {
               value={form.employeeId}
               onChange={(e) => setForm({ ...form, employeeId: e.target.value })}
             />
+          </div>
+          <div>
+            <Label>Gender *</Label>
+            <select
+              className="w-full border rounded p-2 text-sm bg-white cursor-pointer"
+              required
+              value={form.gender}
+              onChange={(e) => setForm({ ...form, gender: e.target.value })}
+            >
+              <option value="">Select Gender</option>
+              <option value="Male">Male</option>
+              <option value="Female">Female</option>
+              <option value="Other">Other</option>
+            </select>
           </div>
           <div>
             <Label>Password *</Label>

@@ -183,23 +183,40 @@ export default function SkillIndicator({
 
           {/* Center content */}
           <div className="absolute inset-0 flex flex-col items-center justify-center">
-            <motion.div
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              transition={{ duration: 0.5, delay: 0.8 }}
-              className="text-lg"
-            >
-              {skillData.icon}
-            </motion.div>
-            <motion.span
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.5, delay: 1 }}
-              className="text-xs font-bold mt-1"
-              style={{ color: skillData.color }}
-            >
-              {skillData.percentage}%
-            </motion.span>
+            {size >= 45 ? (
+              <>
+                <motion.div
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  transition={{ duration: 0.5, delay: 0.8 }}
+                  className="text-lg"
+                >
+                  {skillData.icon}
+                </motion.div>
+                <motion.span
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ duration: 0.5, delay: 1 }}
+                  className="text-xs font-bold mt-1"
+                  style={{ color: skillData.color }}
+                >
+                  {skillData.percentage}%
+                </motion.span>
+              </>
+            ) : (
+              <motion.span
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.5, delay: 0.5 }}
+                className="font-extrabold select-none leading-none tracking-tighter"
+                style={{
+                  color: skillData.color,
+                  fontSize: size < 26 ? "7.5px" : size < 32 ? "8.5px" : "10px",
+                }}
+              >
+                {skillData.percentage}%
+              </motion.span>
+            )}
           </div>
 
           {/* Tooltip */}

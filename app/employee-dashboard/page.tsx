@@ -185,6 +185,7 @@ export default function EmployeeDashboard() {
         }
       } catch (err) {
         console.log('Machines API not available yet');
+        setMachines([]);
       }
 
       try {
@@ -192,26 +193,10 @@ export default function EmployeeDashboard() {
         if (shiftData.success && shiftData.data) {
           setShift(shiftData.data as Shift);
         } else {
-          setShift({
-            type: "Day Shift",
-            startTime: "09:00 AM",
-            endTime: "06:00 PM",
-            days: "Monday - Friday",
-            supervisorName: "Production Manager",
-            hoursWorked: 8,
-            productivity: 85
-          });
+          setShift(null);
         }
       } catch (err) {
-        setShift({
-          type: "Day Shift",
-          startTime: "09:00 AM",
-          endTime: "06:00 PM",
-          days: "Monday - Friday",
-          supervisorName: "Production Manager",
-          hoursWorked: 8,
-          productivity: 85
-        });
+        setShift(null);
       }
 
     } catch (err) {
@@ -521,22 +506,16 @@ export default function EmployeeDashboard() {
             </Card>
 
             {/* Assigned Machines Section */}
-            <Card className="shadow-xl border-0">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-xl">
-                  <Building2 className="h-6 w-6 text-[#1E3A8A]" />
-                  Assigned Machines
-                </CardTitle>
-                <CardDescription>Machines you are currently responsible for</CardDescription>
-              </CardHeader>
-              <CardContent>
-                {machines.length === 0 ? (
-                  <div className="text-center py-12 text-gray-500">
-                    <Wrench className="h-16 w-16 mx-auto mb-4 text-gray-300" />
-                    <p className="font-medium">No machines assigned yet</p>
-                    <p className="text-sm text-gray-400 mt-1">Machine assignments will appear here</p>
-                  </div>
-                ) : (
+            {machines.length > 0 && (
+              <Card className="shadow-xl border-0">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-xl">
+                    <Building2 className="h-6 w-6 text-[#1E3A8A]" />
+                    Assigned Machines
+                  </CardTitle>
+                  <CardDescription>Machines you are currently responsible for</CardDescription>
+                </CardHeader>
+                <CardContent>
                   <div className="space-y-4">
                     {machines.map((machine) => (
                       <div key={machine.id} className="p-5 border border-gray-200 rounded-xl hover:shadow-md transition-all">
@@ -571,26 +550,21 @@ export default function EmployeeDashboard() {
                       </div>
                     ))}
                   </div>
-                )}
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
+            )}
 
             {/* Shift Information Section */}
-            <Card className="shadow-xl border-0">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-xl">
-                  <Clock className="h-6 w-6 text-[#1E3A8A]" />
-                  Current Shift Schedule
-                </CardTitle>
-                <CardDescription>Your work schedule and supervisor information</CardDescription>
-              </CardHeader>
-              <CardContent>
-                {!shift ? (
-                  <div className="text-center py-12 text-gray-500">
-                    <Clock className="h-16 w-16 mx-auto mb-4 text-gray-300" />
-                    <p className="font-medium">No shift assigned yet</p>
-                  </div>
-                ) : (
+            {shift && (
+              <Card className="shadow-xl border-0">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-xl">
+                    <Clock className="h-6 w-6 text-[#1E3A8A]" />
+                    Current Shift Schedule
+                  </CardTitle>
+                  <CardDescription>Your work schedule and supervisor information</CardDescription>
+                </CardHeader>
+                <CardContent>
                   <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
                       <div>
@@ -623,9 +597,9 @@ export default function EmployeeDashboard() {
                       </div>
                     )}
                   </div>
-                )}
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
+            )}
 
             {/* Performance Summary Card */}
             <Card className="bg-gradient-to-r from-[#1E3A8A] to-[#2563eb] text-white shadow-xl border-0">

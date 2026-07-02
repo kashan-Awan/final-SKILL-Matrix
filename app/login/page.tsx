@@ -55,8 +55,6 @@ export default function LoginPage() {
           loginTime: new Date().toISOString(),
           token: token
         }
-        localStorage.setItem('userSession', JSON.stringify(sessionData))
-
         if (token) {
           localStorage.setItem('token', token)
           localStorage.setItem('adminToken', token)
@@ -67,6 +65,9 @@ export default function LoginPage() {
             role: normalizedRole
           }))
         }
+
+        localStorage.setItem('userSession', JSON.stringify(sessionData))
+        window.dispatchEvent(new Event('session-update'))
 
         if (normalizedRole === 'admin') {
           router.push('/admin')

@@ -10,10 +10,15 @@ interface GenderDiversityOverviewProps {
 export default function GenderDiversityOverview({ data }: GenderDiversityOverviewProps) {
   const male = data.filter((e) => e.gender?.toLowerCase() === "male").length
   const female = data.filter((e) => e.gender?.toLowerCase() === "female").length
+  const others = data.filter((e) => {
+    const g = e.gender?.toLowerCase();
+    return g !== "male" && g !== "female" && g !== undefined && g !== null && g !== "";
+  }).length
   const total = data.length
 
   const malePercent = total > 0 ? Math.round((male / total) * 100) : 0
   const femalePercent = total > 0 ? Math.round((female / total) * 100) : 0
+  const othersPercent = total > 0 ? Math.round((others / total) * 100) : 0
 
   return (
     <Card>
@@ -34,6 +39,13 @@ export default function GenderDiversityOverview({ data }: GenderDiversityOvervie
         </div>
         <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3">
           <div className="bg-pink-500 h-3 rounded-full" style={{ width: `${femalePercent}%` }} />
+        </div>
+        <div className="flex justify-between text-sm">
+          <span>Others</span>
+          <span className="font-medium">{others} ({othersPercent}%)</span>
+        </div>
+        <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3">
+          <div className="bg-purple-500 h-3 rounded-full" style={{ width: `${othersPercent}%` }} />
         </div>
         <p className="text-xs text-muted-foreground pt-1">Total: {total} employees</p>
       </CardContent>

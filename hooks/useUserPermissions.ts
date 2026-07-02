@@ -51,7 +51,8 @@ export const useUserPermissions = () => {
         ...session,
         name: data.user.name,
         email: data.user.email,
-        department: data.user.department,
+        role: data.user.role ? data.user.role.toLowerCase() : session.role,
+        department: data.user.department || session.department,
       };
 
       localStorage.setItem('userSession', JSON.stringify(updatedSession));
@@ -74,12 +75,34 @@ export const useUserPermissions = () => {
         } catch (error) {
           console.error('Error parsing user session:', error);
           localStorage.removeItem('userSession');
+          setUserSession(null);
         }
+      } else {
+        setUserSession(null);
       }
       setIsLoading(false);
     };
 
     initializeSession();
+
+    // Listen to storage changes and custom session-update events
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'userSession' || e.key === null) {
+        initializeSession();
+      }
+    };
+
+    const handleCustomUpdate = () => {
+      initializeSession();
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    window.addEventListener('session-update', handleCustomUpdate);
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('session-update', handleCustomUpdate);
+    };
   }, []);
 
   const isManager = userSession?.role?.toLowerCase() === 'manager';

@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { Award } from "lucide-react"
+import { Award, Edit, Trash2 } from "lucide-react"
 import { useTheme } from "./ThemeProvider"
 
 interface Column {
@@ -16,6 +16,8 @@ interface TableProps {
   isLoading?: boolean
   emptyMessage?: string
   onInspect?: (row: any) => void
+  onEdit?: (row: any) => void
+  onDelete?: (row: any) => void
   startIndex?: number
 }
 
@@ -25,6 +27,8 @@ export default function Table({
   isLoading,
   emptyMessage = "No data available",
   onInspect,
+  onEdit,
+  onDelete,
   startIndex = 0,
 }: TableProps) {
   const { isDark } = useTheme()
@@ -74,7 +78,7 @@ export default function Table({
               ))}
 
               {/* Actions column (if any) */}
-              {onInspect && (
+              {(onInspect || onEdit || onDelete) && (
                 <th className="border-b-2 border-blue-800 px-6 py-4 text-center text-sm font-semibold tracking-wide">
                   Actions
                 </th>
@@ -86,7 +90,7 @@ export default function Table({
             {data.length === 0 ? (
               <tr>
                 <td 
-                  colSpan={columns.length + (onInspect ? 2 : 1)} 
+                  colSpan={columns.length + ((onInspect || onEdit || onDelete) ? 2 : 1)} 
                   className="px-6 py-12 text-center text-gray-500 dark:text-gray-400"
                 >
                   <div className="flex flex-col items-center justify-center space-y-3">
@@ -121,16 +125,38 @@ export default function Table({
                     </td>
                   ))}
 
-                  {/* Action button (if any) */}
-                  {onInspect && (
+                  {/* Action buttons */}
+                  {(onInspect || onEdit || onDelete) && (
                     <td className="px-6 py-4 text-center">
-                      <button
-                        onClick={() => onInspect(row)}
-                        className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-lg font-semibold transition-all duration-200 text-sm shadow-sm hover:shadow-md transform hover:scale-105"
-                      >
-                        <Award className="h-4 w-4" />
-                        Inspect
-                      </button>
+                      <div className="flex items-center justify-center gap-2">
+                        {onInspect && (
+                          <button
+                            onClick={() => onInspect(row)}
+                            className="inline-flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-lg font-semibold transition-all duration-200 text-xs shadow-sm hover:shadow-md transform hover:scale-105 cursor-pointer"
+                          >
+                            <Award className="h-3.5 w-3.5" />
+                            Inspect
+                          </button>
+                        )}
+                        {onEdit && (
+                          <button
+                            onClick={() => onEdit(row)}
+                            className="inline-flex items-center justify-center p-1.5 text-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-950/40 rounded-lg border border-blue-200 dark:border-blue-900 transition-all duration-200 hover:scale-105 cursor-pointer"
+                            title="Edit"
+                          >
+                            <Edit className="h-4 w-4" />
+                          </button>
+                        )}
+                        {onDelete && (
+                          <button
+                            onClick={() => onDelete(row)}
+                            className="inline-flex items-center justify-center p-1.5 text-red-655 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950/40 rounded-lg border border-red-200 dark:border-red-900 transition-all duration-200 hover:scale-105 cursor-pointer"
+                            title="Delete"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        )}
+                      </div>
                     </td>
                   )}
                 </tr>

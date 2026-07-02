@@ -71,6 +71,18 @@ export default function DepartmentOverview({ data }: DepartmentOverviewProps) {
     calculateAndRefetch,
   } = useDepartmentPerformance();
 
+  // State for mobile view detection
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
+
   // State for fullscreen functionality
   const [isFullScreen, setIsFullScreen] = useState(false);
 
@@ -87,9 +99,11 @@ export default function DepartmentOverview({ data }: DepartmentOverviewProps) {
   // Department abbreviations mapping
   const departmentAbbreviations: { [key: string]: string } = {
     "Sheet Metal": "SM",
+    "Sheet Molding": "SM",
     "Assembly Line": "AL",
     "Cooling Systems": "CS",
     "Quality Control": "QC",
+    "Injection Molding": "IM",
     Manufacturing: "MFG",
     Engineering: "ENG",
     "Research and Development": "R&D",
@@ -279,6 +293,12 @@ export default function DepartmentOverview({ data }: DepartmentOverviewProps) {
       e.gender === "Male" ||
       e.gender === "MALE"
   ).length;
+  const othersEmployees = data.filter(
+    (e) => {
+      const g = e.gender?.toLowerCase();
+      return g !== "male" && g !== "female" && g !== undefined && g !== null && g !== "";
+    }
+  ).length;
 
   const avgExperience =
     data.length > 0
@@ -464,6 +484,19 @@ export default function DepartmentOverview({ data }: DepartmentOverviewProps) {
             e.gender === "Female" ||
             e.gender === "FEMALE")
       ).length,
+      Others: data.filter(
+        (e) =>
+          e.skills &&
+          typeof e.skills === "object" &&
+          Object.values(e.skills).some(
+            (skillLevel) => skillLevel === "Expert"
+          ) &&
+          (e.gender?.toLowerCase() !== "male" &&
+            e.gender?.toLowerCase() !== "female" &&
+            e.gender !== undefined &&
+            e.gender !== null &&
+            e.gender !== "")
+      ).length,
     },
     {
       skillLevel: "Skilled",
@@ -480,6 +513,15 @@ export default function DepartmentOverview({ data }: DepartmentOverviewProps) {
           (e.gender?.toLowerCase() === "female" ||
             e.gender === "Female" ||
             e.gender === "FEMALE")
+      ).length,
+      Others: data.filter(
+        (e) =>
+          e.skillLevel === "High" &&
+          (e.gender?.toLowerCase() !== "male" &&
+            e.gender?.toLowerCase() !== "female" &&
+            e.gender !== undefined &&
+            e.gender !== null &&
+            e.gender !== "")
       ).length,
     },
     {
@@ -498,6 +540,15 @@ export default function DepartmentOverview({ data }: DepartmentOverviewProps) {
             e.gender === "Female" ||
             e.gender === "FEMALE")
       ).length,
+      Others: data.filter(
+        (e) =>
+          e.skillLevel === "Medium" &&
+          (e.gender?.toLowerCase() !== "male" &&
+            e.gender?.toLowerCase() !== "female" &&
+            e.gender !== undefined &&
+            e.gender !== null &&
+            e.gender !== "")
+      ).length,
     },
     {
       skillLevel: "Low-Skilled",
@@ -514,6 +565,15 @@ export default function DepartmentOverview({ data }: DepartmentOverviewProps) {
           (e.gender?.toLowerCase() === "female" ||
             e.gender === "Female" ||
             e.gender === "FEMALE")
+      ).length,
+      Others: data.filter(
+        (e) =>
+          e.skillLevel === "Low" &&
+          (e.gender?.toLowerCase() !== "male" &&
+            e.gender?.toLowerCase() !== "female" &&
+            e.gender !== undefined &&
+            e.gender !== null &&
+            e.gender !== "")
       ).length,
     },
   ];
@@ -534,7 +594,7 @@ export default function DepartmentOverview({ data }: DepartmentOverviewProps) {
       name: employee.name,
       department: employee.department,
       gender: employee.gender,
-      color: employee.gender === "Female" ? "#4ADE80" : "#3B82F6", // Green for women, blue for men
+      color: employee.gender?.toLowerCase() === "female" ? "#4ADE80" : (employee.gender?.toLowerCase() === "male" ? "#3B82F6" : "#A855F7"), // Green for women, blue for men, purple for others
     };
   });
 
@@ -639,25 +699,42 @@ export default function DepartmentOverview({ data }: DepartmentOverviewProps) {
                   <div className="text-2xl font-bold">{femaleEmployees}</div>
                   <p className="text-green-100 text-xs">Women</p>
                 </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold">{othersEmployees}</div>
+                  <p className="text-purple-100 text-xs">Others</p>
+                </div>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1">
                 <div
-                  className="flex-1 bg-blue-400 h-2 rounded-l-full"
+                  className="bg-blue-400 h-2 rounded-l-full"
                   style={{
+                    flexGrow: maleEmployees || 1,
                     width: `${
                       totalEmployees > 0
                         ? (maleEmployees / totalEmployees) * 100
-                        : 50
+                        : 33
                     }%`,
                   }}
                 ></div>
                 <div
-                  className="flex-1 bg-green-400 h-2 rounded-r-full"
+                  className="bg-green-400 h-2"
                   style={{
+                    flexGrow: femaleEmployees || 1,
                     width: `${
                       totalEmployees > 0
                         ? (femaleEmployees / totalEmployees) * 100
-                        : 50
+                        : 33
+                    }%`,
+                  }}
+                ></div>
+                <div
+                  className="bg-purple-400 h-2 rounded-r-full"
+                  style={{
+                    flexGrow: othersEmployees || 1,
+                    width: `${
+                      totalEmployees > 0
+                        ? (othersEmployees / totalEmployees) * 100
+                        : 33
                     }%`,
                   }}
                 ></div>
@@ -675,6 +752,12 @@ export default function DepartmentOverview({ data }: DepartmentOverviewProps) {
                     : 0}
                   % Women
                 </span>
+                <span>
+                  {totalEmployees > 0
+                    ? Math.round((othersEmployees / totalEmployees) * 100)
+                    : 0}
+                  % Others
+                </span>
               </div>
             </div>
           </CardContent>
@@ -684,10 +767,10 @@ export default function DepartmentOverview({ data }: DepartmentOverviewProps) {
       {/* Main Overview Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Enhanced Skill Distribution */}
-        <Card className="border-0 shadow-lg">
+        <Card className="w-full overflow-hidden border-0 shadow-lg">
           <CardHeader className="bg-gray-100 dark:bg-gray-800 flex flex-row items-center justify-between">
             <div>
-              <CardTitle className="flex items-center gap-2 text-gray-900 dark:text-white">
+              <CardTitle className="text-lg font-semibold flex items-center gap-2 text-gray-900 dark:text-white">
                 <Target className="h-5 w-5 text-gray-500 dark:text-gray-400" />
                 Skill Level Distribution
               </CardTitle>
@@ -705,8 +788,8 @@ export default function DepartmentOverview({ data }: DepartmentOverviewProps) {
                     data={skillDistribution}
                     cx="50%"
                     cy="50%"
-                    innerRadius={70}
-                    outerRadius={120}
+                    innerRadius={60}
+                    outerRadius={100}
                     paddingAngle={3}
                     dataKey="value"
                     label={({ name, percentage }) => `${name}: ${percentage}%`}
@@ -742,11 +825,11 @@ export default function DepartmentOverview({ data }: DepartmentOverviewProps) {
                   data={skillDistribution}
                   cx="50%"
                   cy="50%"
-                  innerRadius={70}
-                  outerRadius={120}
+                  innerRadius={isMobile ? 35 : 50}
+                  outerRadius={isMobile ? 60 : 80}
                   paddingAngle={3}
                   dataKey="value"
-                  label={({ name, percentage }) => `${name}: ${percentage}%`}
+                  label={isMobile ? false : ({ name, percentage }) => `${name}: ${percentage}%`}
                 >
                   {skillDistribution.map((entry, index) => (
                     <Cell
@@ -774,10 +857,10 @@ export default function DepartmentOverview({ data }: DepartmentOverviewProps) {
         </Card>
 
         {/* Enhanced Gender Distribution */}
-        <Card className="border-0 shadow-lg">
+        <Card className="w-full overflow-hidden border-0 shadow-lg">
           <CardHeader className="bg-gray-100 dark:bg-gray-800 flex flex-row items-center justify-between">
             <div>
-              <CardTitle className="flex items-center gap-2 text-gray-900 dark:text-white">
+              <CardTitle className="text-lg font-semibold flex items-center gap-2 text-gray-900 dark:text-white">
                 <Users className="h-5 w-5 text-gray-500 dark:text-gray-400" />
                 Gender by Skill Level
               </CardTitle>
@@ -815,6 +898,12 @@ export default function DepartmentOverview({ data }: DepartmentOverviewProps) {
                     stackId="a"
                     fill="#4ADE80"
                     name="Women"
+                  />
+                  <Bar
+                    dataKey="Others"
+                    stackId="a"
+                    fill="#A855F7"
+                    name="Others"
                     radius={[4, 4, 0, 0]}
                   />
                 </BarChart>
@@ -825,11 +914,11 @@ export default function DepartmentOverview({ data }: DepartmentOverviewProps) {
             <ResponsiveContainer width="100%" height="100%">
               <BarChart
                 data={genderSkillData}
-                margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+                margin={isMobile ? { top: 10, right: 10, left: -20, bottom: 5 } : { top: 20, right: 30, left: 20, bottom: 5 }}
               >
                 <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                <XAxis dataKey="skillLevel" fontSize={12} />
-                <YAxis fontSize={11} />
+                <XAxis dataKey="skillLevel" fontSize={isMobile ? 10 : 12} />
+                <YAxis fontSize={isMobile ? 9 : 11} width={isMobile ? 20 : 30} />
                 <Tooltip
                   contentStyle={{
                     backgroundColor: "#F8FAFC",
@@ -850,6 +939,12 @@ export default function DepartmentOverview({ data }: DepartmentOverviewProps) {
                   stackId="a"
                   fill="#EC4899"
                   name="Women"
+                />
+                <Bar
+                  dataKey="Others"
+                  stackId="a"
+                  fill="#A855F7"
+                  name="Others"
                   radius={[4, 4, 0, 0]}
                 />
               </BarChart>
@@ -861,10 +956,10 @@ export default function DepartmentOverview({ data }: DepartmentOverviewProps) {
       {/* Second Row - Experience and Performance */}
       <div className="grid grid-cols-1 gap-6">
         {/* Department Efficiency */}
-        <Card className="border-0 shadow-lg">
+        <Card className="w-full overflow-hidden border-0 shadow-lg">
           <CardHeader className="bg-gray-100 dark:bg-gray-800 flex flex-row items-center justify-between">
             <div>
-              <CardTitle className="flex items-center gap-2 text-gray-900 dark:text-white">
+              <CardTitle className="text-lg font-semibold flex items-center gap-2 text-gray-900 dark:text-white">
                 <Factory className="h-5 w-5 text-gray-500 dark:text-gray-400" />
                 Department Overview
               </CardTitle>
@@ -922,18 +1017,19 @@ export default function DepartmentOverview({ data }: DepartmentOverviewProps) {
             <ResponsiveContainer width="100%" height="100%">
               <ComposedChart
                 data={departmentSizes}
-                margin={{ top: 20, right: 30, left: 20, bottom: 60 }}
+                margin={isMobile ? { top: 10, right: 10, left: -10, bottom: 40 } : { top: 20, right: 30, left: 20, bottom: 60 }}
               >
                 <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
                 <XAxis
                   dataKey="name"
-                  angle={-45}
+                  angle={isMobile ? -30 : -45}
                   textAnchor="end"
-                  height={80}
-                  fontSize={10}
+                  height={isMobile ? 50 : 80}
+                  fontSize={isMobile ? 9 : 10}
+                  tickFormatter={(value) => isMobile ? getDepartmentAbbr(value) : value}
                 />
-                <YAxis yAxisId="left" fontSize={11} />
-                <YAxis yAxisId="right" orientation="right" fontSize={11} />
+                <YAxis yAxisId="left" fontSize={isMobile ? 9 : 11} width={isMobile ? 20 : 30} />
+                <YAxis yAxisId="right" orientation="right" fontSize={isMobile ? 9 : 11} width={isMobile ? 20 : 30} />
                 <Tooltip
                   formatter={(value, name) => [
                     name === "size"
@@ -965,10 +1061,10 @@ export default function DepartmentOverview({ data }: DepartmentOverviewProps) {
         </Card>
 
         {/* Enhanced Department Performance */}
-        <Card className="border-0 shadow-lg">
+        <Card className="w-full overflow-hidden border-0 shadow-lg">
           <CardHeader className="bg-gray-100 dark:bg-gray-800 flex flex-row items-center justify-between">
             <div>
-              <CardTitle className="flex items-center gap-2 text-gray-900 dark:text-white">
+              <CardTitle className="text-lg font-semibold flex items-center gap-2 text-gray-900 dark:text-white">
                 <Award className="h-5 w-5 text-gray-500 dark:text-gray-400" />
                 Department Performance Trends
               </CardTitle>
@@ -1044,11 +1140,11 @@ export default function DepartmentOverview({ data }: DepartmentOverviewProps) {
               ) : (
                 <LineChart
                   data={performanceData}
-                  margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+                  margin={isMobile ? { top: 10, right: 10, left: -20, bottom: 5 } : { top: 20, right: 30, left: 20, bottom: 5 }}
                 >
                   <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                  <XAxis dataKey="month" fontSize={11} />
-                  <YAxis domain={[0, 100]} fontSize={11} />
+                  <XAxis dataKey="month" fontSize={isMobile ? 10 : 11} />
+                  <YAxis domain={[0, 100]} fontSize={isMobile ? 9 : 11} width={isMobile ? 20 : 30} />
                   <Tooltip
                     formatter={(value, name) => [
                       `${value}%`,
@@ -1088,10 +1184,10 @@ export default function DepartmentOverview({ data }: DepartmentOverviewProps) {
       {/* Third Row - Experience Analysis and Composition */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Years of Experience Distribution */}
-        <Card className="border-0 shadow-lg">
+        <Card className="w-full overflow-hidden border-0 shadow-lg">
           <CardHeader className="bg-gray-100 dark:bg-gray-800 flex flex-row items-center justify-between">
             <div>
-              <CardTitle className="flex items-center gap-2 text-gray-900 dark:text-white">
+              <CardTitle className="text-lg font-semibold flex items-center gap-2 text-gray-900 dark:text-white">
                 <Clock className="h-5 w-5 text-gray-500 dark:text-gray-400" />
                 Years of Experience Distribution
               </CardTitle>
@@ -1150,17 +1246,17 @@ export default function DepartmentOverview({ data }: DepartmentOverviewProps) {
             <ResponsiveContainer width="100%" height="100%">
               <BarChart
                 data={experienceDistribution}
-                margin={{ top: 20, right: 30, left: 20, bottom: 60 }}
+                margin={isMobile ? { top: 10, right: 10, left: -20, bottom: 40 } : { top: 20, right: 30, left: 20, bottom: 60 }}
               >
                 <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
                 <XAxis
                   dataKey="range"
-                  angle={-45}
+                  angle={isMobile ? -30 : -45}
                   textAnchor="end"
-                  height={80}
-                  fontSize={10}
+                  height={isMobile ? 50 : 80}
+                  fontSize={isMobile ? 9 : 10}
                 />
-                <YAxis tickFormatter={(value) => `${value}`} fontSize={11} />
+                <YAxis tickFormatter={(value) => `${value}`} fontSize={isMobile ? 9 : 11} width={isMobile ? 20 : 30} />
                 <Tooltip
                   formatter={(value, name) => {
                     if (name === "count")
@@ -1193,10 +1289,10 @@ export default function DepartmentOverview({ data }: DepartmentOverviewProps) {
 
         {/* add here */}
         {/* Enhanced Experience vs Skill with Bands and Gender Colors */}
-        <Card className="border-0 shadow-lg bg-transparent">
+        <Card className="w-full overflow-hidden border-0 shadow-lg bg-transparent">
           <CardHeader className="bg-gray-100 dark:bg-gray-800 flex flex-row items-center justify-between">
             <div>
-              <CardTitle className="flex items-center gap-2 text-gray-900 dark:text-white">
+              <CardTitle className="text-lg font-semibold flex items-center gap-2 text-gray-900 dark:text-white">
                 <TrendingUp className="h-5 w-5 text-gray-500 dark:text-gray-400" />
                 Experience vs Skill Correlation
               </CardTitle>
@@ -1228,21 +1324,24 @@ export default function DepartmentOverview({ data }: DepartmentOverviewProps) {
                 <div className="relative h-[400px] w-full">
                   <ResponsiveContainer width="100%" height="100%">
                     <ScatterChart
-                      margin={{ top: 20, right: 20, bottom: 20, left: 20 }}
+                      margin={isMobile ? { top: 10, right: 10, bottom: 10, left: -25 } : { top: 20, right: 20, bottom: 20, left: 20 }}
                     >
                       <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
                       <XAxis
                         type="number"
                         dataKey="experience"
                         name="Experience"
-                        unit=" years"
+                        unit={isMobile ? "y" : " years"}
                         domain={[0, "dataMax + 2"]}
+                        fontSize={isMobile ? 9 : 11}
                       />
                       <YAxis
                         type="number"
                         dataKey="skillLevel"
                         name="Skill Level"
                         domain={[0.5, 4.5]}
+                        fontSize={isMobile ? 9 : 11}
+                        width={isMobile ? 55 : 85}
                         tickFormatter={(value) => {
                           const levels = [
                             "",
@@ -1446,9 +1545,8 @@ export default function DepartmentOverview({ data }: DepartmentOverviewProps) {
                     labelFormatter={(value, payload) => {
                       if (payload && payload.length > 0) {
                         const data = payload[0].payload;
-                        return `${data.name} - ${value} years experience (${
-                          data.gender === "Female" ? "Woman" : "Man"
-                        })`;
+                        const genderLabel = data.gender?.toLowerCase() === "female" ? "Woman" : (data.gender?.toLowerCase() === "male" ? "Man" : "Other");
+                        return `${data.name} - ${value} years experience (${genderLabel})`;
                       }
                       return `${value} years experience`;
                     }}
@@ -1468,6 +1566,10 @@ export default function DepartmentOverview({ data }: DepartmentOverviewProps) {
                         <div className="flex items-center gap-2">
                           <div className="w-3 h-3 rounded-full bg-[#EC4899]"></div>
                           <span className="text-sm text-gray-600">Women</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <div className="w-3 h-3 rounded-full bg-[#A855F7]"></div>
+                          <span className="text-sm text-gray-600">Others</span>
                         </div>
                       </div>
                     )}

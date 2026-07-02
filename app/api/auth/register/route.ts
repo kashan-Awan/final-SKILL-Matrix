@@ -6,7 +6,7 @@ import { getDb } from '@/lib/db';
 /** POST /api/auth/register — admin creates a new user account */
 export async function POST(req: NextRequest) {
   try {
-    const { name, email, password, role } = await req.json();
+    const { name, email, password, role, gender } = await req.json();
 
     if (!email || !password || !role) {
       return NextResponse.json(
@@ -53,9 +53,10 @@ export async function POST(req: NextRequest) {
       .input('email', email.trim().toLowerCase())
       .input('password', hashed)
       .input('role', role.toUpperCase())
+      .input('gender', gender || null)
       .query(`
-        INSERT INTO dawlance_user (_id, name, email, password, role, is_deleted)
-        VALUES (@id, @name, @email, @password, @role, 0)
+        INSERT INTO dawlance_user (_id, name, email, password, role, gender, is_deleted)
+        VALUES (@id, @name, @email, @password, @role, @gender, 0)
       `);
 
     return NextResponse.json({

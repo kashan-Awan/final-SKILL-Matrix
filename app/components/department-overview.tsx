@@ -43,7 +43,7 @@ export default function DepartmentOverview({ data }: DepartmentOverviewProps) {
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-2 gap-6">
-      <Card className="col-span-1 lg:col-span-2 xl:col-span-1">
+      <Card className="w-full overflow-hidden col-span-1 lg:col-span-2 xl:col-span-1">
         <CardHeader>
           <CardTitle>Skill Distribution</CardTitle>
           <CardDescription>Overall skill level distribution across all departments</CardDescription>
@@ -91,7 +91,7 @@ export default function DepartmentOverview({ data }: DepartmentOverviewProps) {
         </CardContent>
       </Card>
 
-      <Card className="col-span-1">
+      <Card className="w-full overflow-hidden col-span-1">
         <CardHeader>
           <CardTitle>Department Skill Saturation</CardTitle>
           <CardDescription>Percentage of employees above medium skill level</CardDescription>
@@ -117,7 +117,7 @@ export default function DepartmentOverview({ data }: DepartmentOverviewProps) {
       </Card>
 
       {departmentData.map((dept) => (
-        <Card key={dept.name} className="col-span-1">
+        <Card key={dept.name} className="w-full overflow-hidden col-span-1">
           <CardHeader>
             <CardTitle>{dept.name}</CardTitle>
             <CardDescription>{dept.total} employees</CardDescription>

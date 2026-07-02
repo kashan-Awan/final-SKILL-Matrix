@@ -5,7 +5,7 @@ import { useState } from "react"
 import { useRouter, usePathname } from "next/navigation"
 import Link from "next/link"
 import Image from "next/image"
-import { Menu, X, LogOut, Users, Map, BarChart3 } from "lucide-react"
+import { Menu, X, LogOut, Users, Map, BarChart3, Settings } from "lucide-react"
 
 import { useTheme } from "./ThemeProvider"
 import { getRoleColor } from "../utils/roleColor"
@@ -30,8 +30,12 @@ export default function Layout({ children }: LayoutProps) {
   ]
 
   const isEmployee = userSession?.role === 'employee' || userSession?.role === 'user';
+  const isAdmin = userSession?.role === 'admin';
   const visibleNavigation = userSession
-    ? (isEmployee ? navigation.filter(item => item.name === 'Employees') : navigation)
+    ? [
+        ...navigation.filter(item => !isEmployee || item.name === 'Employees'),
+        ...(isAdmin ? [{ name: "Settings", href: "/settings", icon: Settings }] : [])
+      ]
     : [];
 
   const handleLogout = () => {

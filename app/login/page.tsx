@@ -15,7 +15,9 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
-  const [userRole, setUserRole] = useState("employee")
+
+
+
   const [isLoading, setIsLoading] = useState(false)
   const [errorMessage, setErrorMessage] = useState("")
   const router = useRouter()
@@ -29,7 +31,8 @@ export default function LoginPage() {
       const response = await fetch(`${API_URL}/api/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password, role: userRole })
+        body: JSON.stringify({ email, password })
+
       })
 
       const result = await response.json()
@@ -151,34 +154,7 @@ export default function LoginPage() {
             </div>
           </div>
           
-          <div className="space-y-3">
-            <Label className="text-sm font-medium text-gray-700 dark:text-gray-300">Login as</Label>
-            <div className="grid grid-cols-3 gap-3">
-              {[
-                { value: 'employee', label: 'Employee' },
-                { value: 'manager',  label: 'Manager' },
-                { value: 'admin',    label: 'Admin' }
-              ].map((role) => (
-                <label key={role.value} className="cursor-pointer">
-                  <input
-                    type="radio"
-                    name="userRole"
-                    value={role.value}
-                    checked={userRole === role.value}
-                    onChange={(e) => setUserRole(e.target.value)}
-                    className="sr-only"
-                  />
-                  <div className={`py-2 px-3 rounded-lg border text-center transition-colors duration-200 text-sm ${
-                    userRole === role.value
-                      ? 'bg-blue-600 border-blue-600 text-white'
-                      : 'bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-600'
-                  }`}>
-                    {role.label}
-                  </div>
-                </label>
-              ))}
-            </div>
-          </div>
+
 
           <div className="flex items-center justify-end">
             <Link

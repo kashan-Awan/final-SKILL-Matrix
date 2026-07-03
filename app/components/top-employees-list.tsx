@@ -111,14 +111,26 @@ export default function TopEmployeesList({ data }: TopEmployeesListProps) {
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
               {employees.map((employee, index) => (
-                <div
+                  <div
                   key={employee.id}
                   className={`flex items-center gap-3 p-3 rounded-lg border ${
-                    employee.gender === "Female" ? "border-pink-200" : "border-gray-200"
+                    employee.gender === "Male"
+                      ? "border-blue-200"
+                      : employee.gender === "Female"
+                        ? "border-pink-200"
+                        : "border-purple-200"
                   } hover:shadow-md transition-shadow`}
                 >
                   <div className="relative">
-                    <Avatar className={`h-10 w-10 ${employee.gender === "Female" ? "border-2 border-pink-400" : ""}`}>
+                    <Avatar className={`h-10 w-10 ${
+                      employee.gender === "Male"
+                        ? "border-2 border-blue-400"
+                        : employee.gender === "Female"
+                          ? "border-2 border-pink-400"
+                          : employee.gender
+                            ? "border-2 border-purple-400"
+                            : ""
+                    }`}>
                       <AvatarFallback className={getSkillLevelColor(employee.skillLevel ?? '')}>
                         {getInitials(employee.name)}
                       </AvatarFallback>

@@ -360,15 +360,22 @@ export default function EmployeesPage() {
     { 
       key: "gender", 
       label: "Gender",
-      render: (value: any, row: any) => (
-        <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-          value === "MALE"
-            ? "bg-blue-100 text-blue-800 border border-blue-200"
-            : "bg-purple-100 text-purple-800 border border-purple-200"
-        }`}>
-          {value}
-        </span>
-      )
+      render: (value: any, row: any) => {
+        const g = String(value ?? "").toLowerCase();
+        const isMale = g === "male";
+        const isFemale = g === "female";
+        const cls = isMale
+          ? "bg-blue-100 text-blue-800 border border-blue-200"
+          : isFemale
+            ? "bg-pink-100 text-pink-800 border border-pink-200"
+            : "bg-purple-100 text-purple-800 border border-purple-200";
+
+        return (
+          <span className={`px-3 py-1 rounded-full text-sm font-medium ${cls}`}>
+            {value}
+          </span>
+        );
+      }
     },
     { 
       key: "skills", 

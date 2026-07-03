@@ -8,7 +8,6 @@ import Image from "next/image"
 import { Menu, X, LogOut, Users, Map, BarChart3, Settings } from "lucide-react"
 
 import { useTheme } from "./ThemeProvider"
-import { getRoleColor } from "../utils/roleColor"
 import Button from "./Button"
 import useUserPermissions from "../../hooks/useUserPermissions"
 
@@ -20,38 +19,38 @@ export default function Layout({ children }: LayoutProps) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const router = useRouter()
   const pathname = usePathname()
-  const { isDark } = useTheme()
   const { userSession, logout } = useUserPermissions()
+  const { isDark } = useTheme()
 
   const navigation = [
+    { name: "Home", href: "/landing", icon: Users },
+    { name: "Dashboard", href: "/admin", icon: BarChart3 },
     { name: "Employees", href: "/employees", icon: Users },
     { name: "Skills Mapping", href: "/skills-mapping", icon: Map },
     { name: "Skill Matrix", href: "/skills_matrix_maker", icon: BarChart3 },
   ]
 
-  const isEmployee = userSession?.role === 'employee' || userSession?.role === 'user';
-  const isAdmin = userSession?.role === 'admin';
+  const isEmployee = userSession?.role === "employee" || userSession?.role === "user"
+  const isAdmin = userSession?.role === "admin"
+
   const visibleNavigation = userSession
     ? [
-        ...navigation.filter(item => !isEmployee || item.name === 'Employees'),
-        ...(isAdmin ? [{ name: "Settings", href: "/settings", icon: Settings }] : [])
+        ...navigation.filter((item) => !isEmployee || item.name === "Employees"),
+        ...(isAdmin ? [{ name: "Settings", href: "/settings", icon: Settings }] : []),
       ]
-    : [];
+    : []
 
   const handleLogout = () => {
     logout()
   }
 
-  const publicPages = ['/login', '/forgot-password'];
-  const hideNavbar = publicPages.includes(pathname);
+  const publicPages = ["/login", "/forgot-password"]
+  const hideNavbar = publicPages.includes(pathname)
 
-  // Public auth pages — render without any navbar, but still keep common styling and footer
   if (hideNavbar) {
     return (
       <div className="min-h-screen flex flex-col bg-gray-50 dark:bg-gray-900 transition-colors duration-250">
-        <main className="flex-grow flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-          {children}
-        </main>
+        <main className="flex-grow flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">{children}</main>
         <footer className="bg-white dark:bg-gray-950 border-t border-slate-200 dark:border-slate-800 transition-colors duration-250 py-8 w-full mt-auto">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex flex-col md:flex-row items-center justify-between gap-6 border-b border-slate-100 dark:border-slate-800 pb-6 mb-6">
@@ -60,9 +59,7 @@ export default function Layout({ children }: LayoutProps) {
                   <Image src="/dawlance-d.svg" alt="D" width={18} height={18} className="object-contain" />
                 </div>
                 <div className="flex flex-col">
-                  <span className="text-sm font-extrabold text-gray-950 dark:text-white tracking-tight leading-none">
-                    Dawlance
-                  </span>
+                  <span className="text-sm font-extrabold text-gray-950 dark:text-white tracking-tight leading-none">Dawlance</span>
                   <span className="text-[10px] text-blue-600 dark:text-blue-400 font-bold uppercase tracking-wider mt-0.5">
                     Skills Portal
                   </span>
@@ -70,9 +67,15 @@ export default function Layout({ children }: LayoutProps) {
               </div>
 
               <div className="flex flex-wrap items-center justify-center gap-6 text-sm font-medium text-gray-500 dark:text-gray-400">
-                <Link href="#" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">Privacy Policy</Link>
-                <Link href="#" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">Terms of Service</Link>
-                <Link href="#" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">Support Helpline</Link>
+                <Link href="#" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+                  Privacy Policy
+                </Link>
+                <Link href="#" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+                  Terms of Service
+                </Link>
+                <Link href="#" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+                  Support Helpline
+                </Link>
               </div>
             </div>
 
@@ -91,25 +94,22 @@ export default function Layout({ children }: LayoutProps) {
         <nav className="bg-white/85 dark:bg-gray-900/85 backdrop-blur-md border-b border-slate-200/80 dark:border-slate-800/80 sticky top-0 z-40">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex items-center justify-between h-16">
-              
-              {/* Left: Brand logo */}
               <Link href="/landing" className="flex items-center cursor-pointer group flex-shrink-0">
                 <div className="flex items-center gap-2.5 transition-transform duration-200 group-hover:scale-[1.02]">
                   <div className="w-9 h-9 rounded-xl flex items-center justify-center overflow-hidden border border-blue-500/20 bg-blue-50/50 dark:bg-blue-950/30">
-                    <Image src="/dawlance-d.svg" alt="D" width={22} height={22} className="object-contain" />
+                    <Image src="/dawlance-d.svg" alt="Dawlance" width={22} height={22} className="object-contain" />
                   </div>
+
+
                   <div className="flex flex-col">
-                    <span className="text-sm font-extrabold text-gray-950 dark:text-white tracking-tight leading-none">
-                      Dawlance
-                    </span>
+                    <span className="text-sm font-extrabold text-gray-950 dark:text-white tracking-tight leading-none">Dawlance</span>
                     <span className="text-[10px] text-blue-600 dark:text-blue-400 font-bold uppercase tracking-wider mt-0.5">
                       Skills Portal
                     </span>
                   </div>
                 </div>
               </Link>
-              
-              {/* Center: Navigation Links */}
+
               <div className="hidden md:flex items-center gap-1">
                 {visibleNavigation.map((item) => {
                   const Icon = item.icon
@@ -131,7 +131,6 @@ export default function Layout({ children }: LayoutProps) {
                 })}
               </div>
 
-              {/* Right: User Section */}
               <div className="hidden md:flex items-center gap-4">
                 {userSession && (
                   <div className="flex items-center gap-3 pl-3 border-l border-slate-200 dark:border-slate-800">
@@ -140,7 +139,8 @@ export default function Layout({ children }: LayoutProps) {
                         {userSession.name || "Unknown Operator"}
                       </span>
                       <span className="text-xs text-gray-450 font-medium capitalize">
-                        {userSession.role}{userSession.department ? ` • ${userSession.department}` : ""}
+                        {userSession.role}
+                        {userSession.department ? ` • ${userSession.department}` : ""}
                       </span>
                     </div>
                   </div>
@@ -155,7 +155,6 @@ export default function Layout({ children }: LayoutProps) {
                 </button>
               </div>
 
-              {/* Mobile Trigger */}
               <div className="md:hidden flex items-center">
                 <button
                   onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
@@ -167,10 +166,9 @@ export default function Layout({ children }: LayoutProps) {
             </div>
           </div>
 
-          {/* Mobile Navigation Panel */}
           {isMobileMenuOpen && (
             <div className="md:hidden border-t border-slate-100 dark:border-slate-800 bg-white dark:bg-gray-900 p-4 space-y-3">
-               {visibleNavigation.map((item) => {
+              {visibleNavigation.map((item) => {
                 const Icon = item.icon
                 const isActive = pathname === item.href
                 return (
@@ -203,6 +201,7 @@ export default function Layout({ children }: LayoutProps) {
                     </div>
                   </div>
                 )}
+
                 <Button
                   variant="outline"
                   size="sm"
@@ -218,12 +217,8 @@ export default function Layout({ children }: LayoutProps) {
         </nav>
       )}
 
-      {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-grow w-full">
-        {children}
-      </main>
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-grow w-full">{children}</main>
 
-      {/* Common Footer */}
       <footer className="bg-white dark:bg-gray-950 border-t border-slate-200 dark:border-slate-800 transition-colors duration-250 py-8 w-full mt-auto">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col md:flex-row items-center justify-between gap-6 border-b border-slate-100 dark:border-slate-800 pb-6 mb-6">
@@ -232,12 +227,8 @@ export default function Layout({ children }: LayoutProps) {
                 <Image src="/dawlance-d.svg" alt="D" width={18} height={18} className="object-contain" />
               </div>
               <div className="flex flex-col">
-                <span className="text-sm font-extrabold text-gray-950 dark:text-white tracking-tight leading-none">
-                  Dawlance
-                </span>
-                <span className="text-[10px] text-blue-600 dark:text-blue-400 font-bold uppercase tracking-wider mt-0.5">
-                  Skills Portal
-                </span>
+                <span className="text-sm font-extrabold text-gray-950 dark:text-white tracking-tight leading-none">Dawlance</span>
+                <span className="text-[10px] text-blue-600 dark:text-blue-400 font-bold uppercase tracking-wider mt-0.5">Skills Portal</span>
               </div>
             </div>
 
@@ -251,12 +242,11 @@ export default function Layout({ children }: LayoutProps) {
 
           <div className="flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-gray-400 dark:text-gray-500">
             <p>© {new Date().getFullYear()} Dawlance. All rights reserved.</p>
-            <p className="flex items-center gap-1">
-              Empowering workforce capability and line compliance.
-            </p>
+            <p className="flex items-center gap-1">Empowering workforce capability and line compliance.</p>
           </div>
         </div>
       </footer>
     </div>
   )
 }
+
